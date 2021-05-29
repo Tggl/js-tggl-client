@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "lib": ["es6", "es2019"],
+    "allowJs": false,
+    "sourceMap": true,
+    "outDir": "build/src",
+    "rootDir": "src",
+    "strict": true,
+    "noImplicitReturns": true,
+    "moduleResolution": "node",
+    "baseUrl": "./",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true
+  },
+  "exclude": ["node_modules", "src/**/*.test.ts"],
+  "include": ["src"]
+}
