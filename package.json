@@ -1,21 +1,30 @@
 {
   "name": "tggl-client",
   "version": "1.0.0",
-  "description": "",
-  "main": "src/index.ts",
+  "description": "Tggl javascript client",
+  "keywords": [
+    "Tggl",
+    "feature flag"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
     "format": "prettier --write src/.",
     "test": "jest",
-    "prepare": "husky install"
+    "prepublishOnly": "npm test",
+    "prepare": "husky install && npm run build",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
   },
-  "author": "",
+  "author": "Nicolas Keller",
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^26.0.23",
+    "@types/node-fetch": "^2.5.10",
     "husky": "^6.0.0",
     "jest": "^27.0.1",
     "lint-staged": "^11.0.0",
@@ -24,5 +33,9 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
-  }
+    "node-fetch": "^2.6.1"
+  },
+  "files": [
+    "lib/**/*"
+  ]
 }

@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es2020",
+    "target": "es5",
+    "declaration": true,
     "module": "commonjs",
-    "lib": ["es6", "es2019"],
+    "lib": ["es6"],
     "allowJs": false,
     "sourceMap": true,
-    "outDir": "build/src",
+    "outDir": "lib",
     "rootDir": "src",
     "strict": true,
     "noImplicitReturns": true,
@@ -14,8 +15,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "incremental": true
+    "forceConsistentCasingInFileNames": true
   },
   "exclude": ["node_modules", "src/**/*.test.ts"],
   "include": ["src"]
