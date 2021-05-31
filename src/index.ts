@@ -60,7 +60,9 @@ export class TgglClient {
     return this.flags[slug] !== undefined
   }
 
-  get(slug: string) {
-    return this.flags[slug]
+  get<T>(slug: string): T | undefined
+  get<T>(slug: string, defaultValue: T): T
+  get<T>(slug: string, defaultValue?: T): T {
+    return this.flags[slug] === undefined ? defaultValue : this.flags[slug]
   }
 }

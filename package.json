@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc",
     "format": "prettier --write src/.",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "prepublishOnly": "npm test",
     "prepare": "husky install && npm run build",
     "version": "npm run format && git add -A src",
