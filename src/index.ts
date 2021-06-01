@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'
+import axios from 'axios'
 
 export class TgglClient {
   private flags: Record<string, any> = {}
@@ -33,27 +33,24 @@ export class TgglClient {
 
     this.context = context
 
-    const response = await fetch('https://api.tggl.io/flags', {
-      method: 'post',
-      body: JSON.stringify(context),
-      headers: {
-        'x-tggl-api-key': this.apiKey,
-      },
-    })
-
-    let json: any = {}
-
     try {
-      json = await response.json()
-    } catch (error) {}
+      const response = await axios({
+        method: 'post',
+        url: 'https://api.tggl.io/flags',
+        data: JSON.stringify(context),
+        headers: {
+          'x-tggl-api-key': this.apiKey,
+        },
+      })
 
-    if (!response.ok) {
+      this.flags = response.data
+    } catch (error) {
       throw new Error(
-        `Invalid response from Tggl: ${json.error || response.statusText}`
+        `Invalid response from Tggl: ${
+          error.response?.data?.error || error.response?.statusText
+        }`
       )
     }
-
-    this.flags = json
   }
 
   isActive(slug: string) {
