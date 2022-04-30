@@ -3,8 +3,9 @@ import axios from 'axios'
 export class TgglClient {
   private flags: Record<string, any> = {}
   private context: Record<string, any> = {}
+  private url: string
 
-  constructor(private apiKey: string) {
+  constructor(private apiKey: string, options: { url?: string } = {}) {
     if (apiKey === undefined) {
       throw new Error('Could not create Tggl client, missing API Key')
     }
@@ -16,6 +17,8 @@ export class TgglClient {
     if (!apiKey) {
       throw new Error('Could not create Tggl client, API Key cannot be empty')
     }
+
+    this.url = options.url ?? 'https://api.tggl.io/flags'
   }
 
   async setContext(context: Record<string, any>) {
@@ -36,7 +39,7 @@ export class TgglClient {
     try {
       const response = await axios({
         method: 'post',
-        url: 'https://api.tggl.io/flags',
+        url: this.url,
         data: JSON.stringify(context),
         headers: {
           'x-tggl-api-key': this.apiKey,

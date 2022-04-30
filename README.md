@@ -13,12 +13,17 @@ import { TgglClient } from 'tggl-client'
 const client = new TgglClient('YOUR_API_KEY')
 ```
 
+You may pass options:
+```typescript
+const client = new TgglClient('YOUR_API_KEY', { url: 'https://your.mock' })
+```
+
 Set the context on which flags evaluation should be performed:
 ```typescript
 await client.setContext({
   userId: 'foo',
   email: 'foo@gmail.com',
-  browser: 'Firefox',
+  country: 'FR',
   // ...
 })
 ```
@@ -47,7 +52,7 @@ if (client.get('my-feature') === 'Variation A') {
 }
 ```
 
-If a flag is inactive, it will always return `undefined`, otherwise it will return the value of the bucket the context falls in.
+If a flag is inactive, it will always return `undefined`, otherwise it will return the value of the variation the context falls in.
 You can specify a default value for innactive flags:
 
 ```typescript

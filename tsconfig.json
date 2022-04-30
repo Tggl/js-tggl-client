@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es5",
     "declaration": true,
+    "declarationMap": true,
     "module": "commonjs",
     "lib": ["es6"],
     "allowJs": false,
@@ -10,6 +11,9 @@
     "rootDir": "src",
     "strict": true,
     "noImplicitReturns": true,
+    "downlevelIteration": true,
+    "isolatedModules": true,
+    "alwaysStrict": true,
     "moduleResolution": "node",
     "baseUrl": "./",
     "esModuleInterop": true,
