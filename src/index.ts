@@ -40,7 +40,7 @@ export class TgglClient {
       const response = await axios({
         method: 'post',
         url: this.url,
-        data: JSON.stringify(context),
+        data: context,
         headers: {
           'x-tggl-api-key': this.apiKey,
         },
