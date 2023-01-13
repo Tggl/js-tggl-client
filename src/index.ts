@@ -19,30 +19,34 @@ export class TgglResponse {
 }
 
 const assertValidContext = (context: any) => {
-  if (context === undefined) {
-    throw new Error('Could not set Tggl context, context is missing')
+  if (context === undefined || context === null) {
+    throw new Error('Invalid Tggl context, context is missing')
   }
 
-  if (typeof context !== 'object' || context === null) {
-    throw new Error('Could not set Tggl context, context must be an object')
+  if (typeof context !== 'object') {
+    throw new Error('Invalid Tggl context, context must be an object')
   }
 
   if (Array.isArray(context)) {
-    throw new Error('Could not set Tggl context, context cannot be an array')
+    throw new Error('Invalid Tggl context, context cannot be an array')
   }
 }
 
-const assertValidApiKey = (apiKey: any) => {
+const checkApiKey = (apiKey: any) => {
   if (apiKey === undefined) {
-    throw new Error('Could not create Tggl client, missing API Key')
+    console.error('Could not properly create Tggl client, missing API Key')
   }
 
   if (typeof apiKey !== 'string') {
-    throw new Error('Could not create Tggl client, API Key must be a string')
+    console.error(
+      'Could not properly create Tggl client, API Key must be a string'
+    )
   }
 
   if (!apiKey) {
-    throw new Error('Could not create Tggl client, API Key cannot be empty')
+    console.error(
+      'Could not properly create Tggl client, API Key cannot be empty'
+    )
   }
 }
 
@@ -53,7 +57,7 @@ export class TgglClient extends TgglResponse {
 
   constructor(private apiKey: string, options: { url?: string } = {}) {
     super()
-    assertValidApiKey(apiKey)
+    checkApiKey(apiKey)
 
     this.url = options.url ?? 'https://api.tggl.io/flags'
 
@@ -69,14 +73,7 @@ export class TgglClient extends TgglResponse {
             },
           })
 
-          return (response.data as ActiveFlags[]).map((flags, i) => {
-            try {
-              assertValidContext(contexts[i])
-              return flags
-            } catch (error) {
-              return error as Error
-            }
-          })
+          return response.data
         } catch (error) {
           throw new Error(
             `Invalid response from Tggl: ${
@@ -91,27 +88,39 @@ export class TgglClient extends TgglResponse {
   }
 
   async setContext(context: Context) {
-    const response = await this.loader.load(context)
+    try {
+      assertValidContext(context)
+      const response = await this.loader.load(context)
 
-    this.context = context
-    this.flags = response
+      this.context = context
+      this.flags = response
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   async evalContext(context: Context) {
     const responses = await this.evalContexts([context])
 
-    if (responses[0] instanceof Error) {
-      throw responses[0]
-    }
-
     return responses[0]
   }
 
   async evalContexts(contexts: Context[]) {
-    const responses = await this.loader.loadMany(contexts)
+    try {
+      contexts.forEach(assertValidContext)
+      const responses = await this.loader.loadMany(contexts)
 
-    return responses.map((response) =>
-      response instanceof Error ? response : new TgglResponse(response)
-    )
+      return responses.map((response) => {
+        if (response instanceof Error) {
+          throw response
+        }
+
+        return new TgglResponse(response)
+      })
+    } catch (error) {
+      console.error(error)
+
+      return contexts.map(() => new TgglResponse())
+    }
   }
 }
