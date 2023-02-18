@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios'
 import DataLoader from 'dataloader'
+import { evalFlag, Flag } from 'tggl-core'
 
 type Context = Record<string, any>
 type ActiveFlags = Record<string, any>
@@ -55,8 +56,11 @@ export class TgglClient extends TgglResponse {
   private url: string
   private loader: DataLoader<Context, ActiveFlags>
 
-  constructor(private apiKey: string, options: { url?: string } = {}) {
-    super()
+  constructor(
+    private apiKey: string,
+    options: { url?: string; initialActiveFlags?: ActiveFlags } = {}
+  ) {
+    super(options.initialActiveFlags)
     checkApiKey(apiKey)
 
     this.url = options.url ?? 'https://api.tggl.io/flags'
@@ -122,5 +126,49 @@ export class TgglClient extends TgglResponse {
 
       return contexts.map(() => new TgglResponse())
     }
+  }
+}
+
+export class TgglLocalClient {
+  private url: string
+  private config: Map<string, Flag>
+
+  constructor(
+    private apiKey: string,
+    options: { url?: string; initialConfig?: Map<string, Flag> } = {}
+  ) {
+    checkApiKey(apiKey)
+
+    this.url = options.url ?? 'https://api.tggl.io/config'
+    this.config = options.initialConfig ?? new Map()
+  }
+
+  async fetchConfig() {
+    const response = await axios({
+      url: this.url,
+      headers: {
+        'x-tggl-api-key': this.apiKey,
+      },
+    })
+
+    this.config.clear()
+    for (const flag of response.data) {
+      this.config.set(flag.slug, flag)
+    }
+  }
+
+  isActive(context: Context, slug: string) {
+    assertValidContext(context)
+    const flag = this.config.get(slug)
+    return flag ? evalFlag(context, flag) !== undefined : false
+  }
+
+  get<T>(context: Context, slug: string): T | undefined
+  get<T>(context: Context, slug: string, defaultValue: T): T
+  get<T>(context: Context, slug: string, defaultValue?: T): T {
+    assertValidContext(context)
+    const flag = this.config.get(slug)
+    const result = flag ? evalFlag(context, flag) : undefined
+    return result === undefined ? defaultValue : result
   }
 }
