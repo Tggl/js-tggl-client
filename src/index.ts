@@ -2,19 +2,25 @@ import axios, { AxiosError } from 'axios'
 import DataLoader from 'dataloader'
 import { evalFlag, Flag } from 'tggl-core'
 
-type Context = Record<string, any>
-type ActiveFlags = Record<string, any>
+type TgglContext = Record<string, any>
+type TgglFlags = Record<string, any>
 
-export class TgglResponse {
-  constructor(protected flags: ActiveFlags = {}) {}
+export class TgglResponse<TFlags extends TgglFlags = TgglFlags> {
+  constructor(protected flags: Partial<TFlags> = {}) {}
 
-  isActive(slug: string) {
+  isActive(slug: keyof TFlags) {
     return this.flags[slug] !== undefined
   }
 
-  get<T>(slug: string): T | undefined
-  get<T>(slug: string, defaultValue: T): T
-  get<T>(slug: string, defaultValue?: T): T {
+  get<TSlug extends keyof TFlags>(slug: TSlug): TFlags[TSlug] | undefined
+  get<TSlug extends keyof TFlags>(
+    slug: TSlug,
+    defaultValue: TFlags[TSlug]
+  ): TFlags[TSlug]
+  get<TSlug extends keyof TFlags>(
+    slug: TSlug,
+    defaultValue?: TFlags[TSlug]
+  ): TFlags[TSlug] | undefined {
     return this.flags[slug] === undefined ? defaultValue : this.flags[slug]
   }
 }
@@ -51,21 +57,24 @@ const checkApiKey = (apiKey: any) => {
   }
 }
 
-export class TgglClient extends TgglResponse {
-  private context: Context = {}
+export class TgglClient<
+  TFlags extends TgglFlags = TgglFlags,
+  TContext extends TgglContext = TgglContext
+> extends TgglResponse<TFlags> {
+  private context: Partial<TContext> = {}
   private url: string
-  private loader: DataLoader<Context, ActiveFlags>
+  private loader: DataLoader<Partial<TContext>, Partial<TFlags>>
 
   constructor(
     private apiKey: string,
-    options: { url?: string; initialActiveFlags?: ActiveFlags } = {}
+    options: { url?: string; initialActiveFlags?: Partial<TFlags> } = {}
   ) {
     super(options.initialActiveFlags)
     checkApiKey(apiKey)
 
     this.url = options.url ?? 'https://api.tggl.io/flags'
 
-    this.loader = new DataLoader<Context, ActiveFlags>(
+    this.loader = new DataLoader<Partial<TContext>, Partial<TFlags>>(
       async (contexts) => {
         try {
           const response = await axios({
@@ -91,7 +100,7 @@ export class TgglClient extends TgglResponse {
     )
   }
 
-  async setContext(context: Context) {
+  async setContext(context: Partial<TContext>) {
     try {
       assertValidContext(context)
       const response = await this.loader.load(context)
@@ -103,13 +112,15 @@ export class TgglClient extends TgglResponse {
     }
   }
 
-  async evalContext(context: Context) {
+  async evalContext(context: Partial<TContext>) {
     const responses = await this.evalContexts([context])
 
     return responses[0]
   }
 
-  async evalContexts(contexts: Context[]) {
+  async evalContexts(
+    contexts: Partial<TContext>[]
+  ): Promise<TgglResponse<TFlags>[]> {
     try {
       contexts.forEach(assertValidContext)
       const responses = await this.loader.loadMany(contexts)
@@ -129,13 +140,16 @@ export class TgglClient extends TgglResponse {
   }
 }
 
-export class TgglLocalClient {
+export class TgglLocalClient<
+  TFlags extends TgglFlags = TgglFlags,
+  TContext extends TgglContext = TgglContext
+> {
   private url: string
-  private config: Map<string, Flag>
+  private config: Map<keyof TFlags, Flag>
 
   constructor(
     private apiKey: string,
-    options: { url?: string; initialConfig?: Map<string, Flag> } = {}
+    options: { url?: string; initialConfig?: Map<keyof TFlags, Flag> } = {}
   ) {
     checkApiKey(apiKey)
 
@@ -157,15 +171,26 @@ export class TgglLocalClient {
     }
   }
 
-  isActive(context: Context, slug: string) {
+  isActive(context: Partial<TContext>, slug: keyof TFlags) {
     assertValidContext(context)
     const flag = this.config.get(slug)
     return flag ? evalFlag(context, flag) !== undefined : false
   }
 
-  get<T>(context: Context, slug: string): T | undefined
-  get<T>(context: Context, slug: string, defaultValue: T): T
-  get<T>(context: Context, slug: string, defaultValue?: T): T {
+  get<TSlug extends keyof TFlags>(
+    context: Partial<TContext>,
+    slug: TSlug
+  ): TFlags[TSlug] | undefined
+  get<TSlug extends keyof TFlags>(
+    context: Partial<TContext>,
+    slug: TSlug,
+    defaultValue: TFlags[TSlug]
+  ): TFlags[TSlug]
+  get<TSlug extends keyof TFlags>(
+    context: Partial<TContext>,
+    slug: TSlug,
+    defaultValue?: TFlags[TSlug]
+  ): TFlags[TSlug] | undefined {
     assertValidContext(context)
     const flag = this.config.get(slug)
     const result = flag ? evalFlag(context, flag) : undefined
