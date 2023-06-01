@@ -171,17 +171,28 @@ export class TgglLocalClient<
   }
 
   async fetchConfig() {
-    const response = await axios({
-      url: this.url,
-      headers: {
-        'x-tggl-api-key': this.apiKey,
-      },
-    })
+    try {
+      const response = await axios({
+        url: this.url,
+        headers: {
+          'x-tggl-api-key': this.apiKey,
+        },
+      })
 
-    this.config.clear()
-    for (const flag of response.data) {
-      this.config.set(flag.slug, flag)
+      this.config.clear()
+      for (const flag of response.data) {
+        this.config.set(flag.slug, flag)
+      }
+    } catch (error) {
+      throw new Error(
+        `Invalid response from Tggl: ${
+          (error as AxiosError<{ error?: string }>).response?.data?.error ||
+          (error as AxiosError).response?.statusText
+        }`
+      )
     }
+
+    return this.config
   }
 
   isActive(context: Partial<TContext>, slug: Slug<TFlags>) {
