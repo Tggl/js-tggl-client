@@ -6,31 +6,33 @@ export interface TgglContext {}
 
 export interface TgglFlags {}
 
-type Slug<TFlags extends TgglFlags = TgglFlags> = keyof TFlags extends never
-  ? string
-  : keyof TFlags
+export type TgglFlagSlug<TFlags extends TgglFlags = TgglFlags> =
+  keyof TFlags extends never ? string : keyof TFlags
 
-type FlagValue<TFlags extends TgglFlags = TgglFlags, TSlug = string> =
+export type TgglFlagValue<TSlug, TFlags extends TgglFlags = TgglFlags> =
   TSlug extends keyof TFlags ? TFlags[TSlug] : any
 
 export class TgglResponse<TFlags extends TgglFlags = TgglFlags> {
   constructor(protected flags: Partial<TFlags> = {}) {}
 
-  isActive(slug: Slug<TFlags>): boolean {
+  isActive(slug: TgglFlagSlug<TFlags>): boolean {
     return this.flags[slug as keyof TFlags] !== undefined
   }
 
-  get<TSlug extends Slug<TFlags>>(
+  get<TSlug extends TgglFlagSlug<TFlags>>(
     slug: TSlug
-  ): FlagValue<TFlags, TSlug> | undefined
-  get<TSlug extends Slug<TFlags>, TDefaultValue = FlagValue<TFlags, TSlug>>(
+  ): TgglFlagValue<TSlug, TFlags> | undefined
+  get<
+    TSlug extends TgglFlagSlug<TFlags>,
+    TDefaultValue = TgglFlagValue<TSlug, TFlags>
+  >(
     slug: TSlug,
     defaultValue: TDefaultValue
-  ): FlagValue<TFlags, TSlug> | TDefaultValue
-  get<TSlug extends keyof TFlags, TDefaultValue = FlagValue<TFlags, TSlug>>(
+  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue
+  get<TSlug extends keyof TFlags, TDefaultValue = TgglFlagValue<TSlug, TFlags>>(
     slug: TSlug,
     defaultValue?: TDefaultValue
-  ): FlagValue<TFlags, TSlug> | TDefaultValue | undefined {
+  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue | undefined {
     // @ts-ignore
     return this.flags[slug as keyof TFlags] === undefined
       ? defaultValue
@@ -158,11 +160,14 @@ export class TgglLocalClient<
   TContext extends TgglContext = TgglContext
 > {
   private url: string
-  private config: Map<Slug<TFlags>, Flag>
+  private config: Map<TgglFlagSlug<TFlags>, Flag>
 
   constructor(
     private apiKey: string,
-    options: { url?: string; initialConfig?: Map<Slug<TFlags>, Flag> } = {}
+    options: {
+      url?: string
+      initialConfig?: Map<TgglFlagSlug<TFlags>, Flag>
+    } = {}
   ) {
     checkApiKey(apiKey)
 
@@ -195,26 +200,32 @@ export class TgglLocalClient<
     return this.config
   }
 
-  isActive(context: Partial<TContext>, slug: Slug<TFlags>) {
+  isActive(context: Partial<TContext>, slug: TgglFlagSlug<TFlags>) {
     assertValidContext(context)
     const flag = this.config.get(slug)
     return flag ? evalFlag(context, flag) !== undefined : false
   }
 
-  get<TSlug extends Slug<TFlags>>(
+  get<TSlug extends TgglFlagSlug<TFlags>>(
     context: Partial<TContext>,
     slug: TSlug
-  ): FlagValue<TFlags, TSlug> | undefined
-  get<TSlug extends Slug<TFlags>, TDefaultValue = FlagValue<TFlags, TSlug>>(
+  ): TgglFlagValue<TSlug, TFlags> | undefined
+  get<
+    TSlug extends TgglFlagSlug<TFlags>,
+    TDefaultValue = TgglFlagValue<TSlug, TFlags>
+  >(
     context: Partial<TContext>,
     slug: TSlug,
     defaultValue: TDefaultValue
-  ): FlagValue<TFlags, TSlug> | TDefaultValue
-  get<TSlug extends Slug<TFlags>, TDefaultValue = FlagValue<TFlags, TSlug>>(
+  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue
+  get<
+    TSlug extends TgglFlagSlug<TFlags>,
+    TDefaultValue = TgglFlagValue<TSlug, TFlags>
+  >(
     context: Partial<TContext>,
     slug: TSlug,
     defaultValue?: TDefaultValue
-  ): FlagValue<TFlags, TSlug> | TDefaultValue | undefined {
+  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue | undefined {
     assertValidContext(context)
     const flag = this.config.get(slug)
     const result = flag ? evalFlag(context, flag) : undefined
