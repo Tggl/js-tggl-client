@@ -1,9 +1,9 @@
 import { TgglLocalClient } from './index'
 import { evalFlag } from 'tggl-core'
-import axios from 'axios'
+import { apiCall } from './apiCall'
 
 jest.mock('tggl-core')
-jest.mock('axios')
+jest.mock('./apiCall')
 
 test('Not initialized', () => {
   const client = new TgglLocalClient('API_KEY')
@@ -23,50 +23,47 @@ test('Invalid context', () => {
 
 test('fetchConfig', async () => {
   // @ts-ignore
-  axios.mockResolvedValue({
-    data: [
-      {
-        slug: 'flagA',
-        conditions: [
-          {
-            rules: [
-              {
-                key: 'userId',
-                operator: 'STR_EQUAL',
-                negate: false,
-                values: ['u1', 'u2'],
-              },
-            ],
-            variation: {
-              active: true,
-              value: 'foo',
+  apiCall.mockResolvedValue([
+    {
+      slug: 'flagA',
+      conditions: [
+        {
+          rules: [
+            {
+              key: 'userId',
+              operator: 'STR_EQUAL',
+              negate: false,
+              values: ['u1', 'u2'],
             },
+          ],
+          variation: {
+            active: true,
+            value: 'foo',
           },
-        ],
-        defaultVariation: {
-          active: false,
-          value: null,
         },
+      ],
+      defaultVariation: {
+        active: false,
+        value: null,
       },
-      {
-        slug: 'flagB',
-        conditions: [],
-        defaultVariation: {
-          active: true,
-          value: 'bar',
-        },
+    },
+    {
+      slug: 'flagB',
+      conditions: [],
+      defaultVariation: {
+        active: true,
+        value: 'bar',
       },
-    ],
-  })
+    },
+  ])
 
   const client = new TgglLocalClient('API_KEY')
   await client.fetchConfig()
 
-  expect(axios).toHaveBeenCalledWith({
-    headers: {
-      'x-tggl-api-key': 'API_KEY',
-    },
+  expect(apiCall).toHaveBeenCalledWith({
+    apiKey: 'API_KEY',
     url: 'https://api.tggl.io/config',
+    method: 'get',
   })
 
   // @ts-ignore
@@ -120,18 +117,16 @@ test('fetchConfig', async () => {
 
 test('isActive falsy values', async () => {
   // @ts-ignore
-  axios.mockResolvedValue({
-    data: [
-      {
-        slug: 'flagB',
-        conditions: [],
-        defaultVariation: {
-          active: true,
-          value: 'bar',
-        },
+  apiCall.mockResolvedValue([
+    {
+      slug: 'flagB',
+      conditions: [],
+      defaultVariation: {
+        active: true,
+        value: 'bar',
       },
-    ],
-  })
+    },
+  ])
 
   const client = new TgglLocalClient('API_KEY')
   await client.fetchConfig()
@@ -163,18 +158,16 @@ test('isActive falsy values', async () => {
 
 test('get falsy values', async () => {
   // @ts-ignore
-  axios.mockResolvedValue({
-    data: [
-      {
-        slug: 'flagB',
-        conditions: [],
-        defaultVariation: {
-          active: true,
-          value: 'bar',
-        },
+  apiCall.mockResolvedValue([
+    {
+      slug: 'flagB',
+      conditions: [],
+      defaultVariation: {
+        active: true,
+        value: 'bar',
       },
-    ],
-  })
+    },
+  ])
 
   const client = new TgglLocalClient('API_KEY')
   await client.fetchConfig()

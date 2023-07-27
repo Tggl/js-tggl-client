@@ -1,8 +1,8 @@
 import { TgglClient } from './index'
 
-jest.mock('axios')
+jest.mock('./apiCall')
 
-import axios from 'axios'
+import { apiCall } from './apiCall'
 
 beforeAll(() => {
   console.error = jest.fn()
@@ -11,9 +11,7 @@ beforeAll(() => {
 describe('stateful client', () => {
   test('Success', async () => {
     // @ts-ignore
-    axios.mockResolvedValue({
-      data: [{ flagA: null, flagB: 'foo', flagC: false }],
-    })
+    apiCall.mockResolvedValue([{ flagA: null, flagB: 'foo', flagC: false }])
 
     const client = new TgglClient('API_KEY')
     await expect(client.setContext({ foo: 'bar' })).resolves.toBeUndefined()
@@ -33,11 +31,9 @@ describe('stateful client', () => {
     expect(client.get('flagC', 'bar')).toBe(false)
     expect(client.get('flagD', 'bar')).toBe('bar')
 
-    expect(axios).toHaveBeenCalledWith({
-      data: [{ foo: 'bar' }],
-      headers: {
-        'x-tggl-api-key': 'API_KEY',
-      },
+    expect(apiCall).toHaveBeenCalledWith({
+      body: [{ foo: 'bar' }],
+      apiKey: 'API_KEY',
       method: 'post',
       url: 'https://api.tggl.io/flags',
     })
@@ -45,17 +41,13 @@ describe('stateful client', () => {
 
   test('API error', async () => {
     // @ts-ignore
-    axios.mockResolvedValue({
-      data: [{ flagA: null, flagB: 'foo', flagC: false }],
-    })
+    apiCall.mockResolvedValue([{ flagA: null, flagB: 'foo', flagC: false }])
 
     const client = new TgglClient('API_KEY')
     await expect(client.setContext({ foo: 'bar' })).resolves.toBeUndefined()
 
     // @ts-ignore
-    axios.mockRejectedValue({
-      response: { data: { error: 'Invalid API key' } },
-    })
+    apiCall.mockRejectedValue({ error: 'Invalid API key' })
     await expect(client.setContext({ foo: 'baz' })).resolves.toBeUndefined()
 
     expect(client.isActive('flagA')).toBe(true)
@@ -67,9 +59,7 @@ describe('stateful client', () => {
 
   test('Invalid context', async () => {
     // @ts-ignore
-    axios.mockResolvedValue({
-      data: [{ flagA: null, flagB: 'foo', flagC: false }],
-    })
+    apiCall.mockResolvedValue([{ flagA: null, flagB: 'foo', flagC: false }])
 
     const client = new TgglClient('API_KEY')
     await expect(client.setContext({ foo: 'bar' })).resolves.toBeUndefined()
@@ -87,9 +77,7 @@ describe('stateless client', () => {
   describe('evalContext', () => {
     test('Success', async () => {
       // @ts-ignore
-      axios.mockResolvedValue({
-        data: [{ flagA: null, flagB: 'foo', flagC: false }],
-      })
+      apiCall.mockResolvedValue([{ flagA: null, flagB: 'foo', flagC: false }])
 
       const client = new TgglClient('API_KEY')
       const response = await client.evalContext({ foo: 'bar' })
@@ -109,11 +97,9 @@ describe('stateless client', () => {
       expect(response.get('flagC', 'bar')).toBe(false)
       expect(response.get('flagD', 'bar')).toBe('bar')
 
-      expect(axios).toHaveBeenCalledWith({
-        data: [{ foo: 'bar' }],
-        headers: {
-          'x-tggl-api-key': 'API_KEY',
-        },
+      expect(apiCall).toHaveBeenCalledWith({
+        body: [{ foo: 'bar' }],
+        apiKey: 'API_KEY',
         method: 'post',
         url: 'https://api.tggl.io/flags',
       })
@@ -121,9 +107,7 @@ describe('stateless client', () => {
 
     test('API error', async () => {
       // @ts-ignore
-      axios.mockRejectedValue({
-        response: { data: { error: 'Invalid API key' } },
-      })
+      apiCall.mockRejectedValue({ error: 'Invalid API key' })
 
       const client = new TgglClient('API_KEY')
       const response = await client.evalContext({ foo: 'bar' })

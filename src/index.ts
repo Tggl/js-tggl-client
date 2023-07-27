@@ -1,6 +1,6 @@
-import axios, { AxiosError } from 'axios'
 import DataLoader from 'dataloader'
 import { evalFlag, Flag } from 'tggl-core'
+import { apiCall } from './apiCall'
 
 export interface TgglContext {}
 
@@ -92,22 +92,16 @@ export class TgglClient<
     this.loader = new DataLoader<Partial<TContext>, Partial<TFlags>>(
       async (contexts) => {
         try {
-          const response = await axios({
-            method: 'post',
+          return await apiCall({
             url: this.url,
-            data: contexts,
-            headers: {
-              'x-tggl-api-key': this.apiKey,
-            },
+            apiKey: this.apiKey,
+            body: contexts,
+            method: 'post',
           })
-
-          return response.data
         } catch (error) {
           throw new Error(
-            `Invalid response from Tggl: ${
-              (error as AxiosError<{ error?: string }>).response?.data?.error ||
-              (error as AxiosError).response?.statusText
-            }`
+            // @ts-ignore
+            `Invalid response from Tggl: ${error.error ?? error.message}`
           )
         }
       },
@@ -177,23 +171,20 @@ export class TgglLocalClient<
 
   async fetchConfig() {
     try {
-      const response = await axios({
+      const response = await apiCall({
         url: this.url,
-        headers: {
-          'x-tggl-api-key': this.apiKey,
-        },
+        apiKey: this.apiKey,
+        method: 'get',
       })
 
       this.config.clear()
-      for (const flag of response.data) {
+      for (const flag of response) {
         this.config.set(flag.slug, flag)
       }
     } catch (error) {
       throw new Error(
-        `Invalid response from Tggl: ${
-          (error as AxiosError<{ error?: string }>).response?.data?.error ||
-          (error as AxiosError).response?.statusText
-        }`
+        // @ts-ignore
+        `Invalid response from Tggl: ${error.error ?? error.message}`
       )
     }
 

@@ -4,7 +4,8 @@
     "declaration": true,
     "declarationMap": true,
     "module": "commonjs",
-    "lib": ["es6"],
+    "lib": [
+      "DOM","es6"],
     "allowJs": false,
     "sourceMap": true,
     "outDir": "lib",
