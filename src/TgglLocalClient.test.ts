@@ -1,6 +1,6 @@
-import { TgglLocalClient } from './index'
 import { evalFlag } from 'tggl-core'
 import { apiCall } from './apiCall'
+import { TgglLocalClient } from './TgglLocalClient'
 
 jest.mock('tggl-core')
 jest.mock('./apiCall')
@@ -19,6 +19,17 @@ test('Invalid context', () => {
   // @ts-ignore
   expect(() => client.get(null, 'foo')).toThrow()
   expect(() => client.isActive([], 'foo')).toThrow()
+  expect(() => client.isActive(5, 'foo')).toThrow()
+})
+
+test('fetchConfig error', async () => {
+  // @ts-ignore
+  apiCall.mockRejectedValue({ error: 'API error' })
+
+  const client = new TgglLocalClient('API_KEY')
+  await expect(client.fetchConfig()).rejects.toThrow(
+    'Invalid response from Tggl: API error'
+  )
 })
 
 test('fetchConfig', async () => {

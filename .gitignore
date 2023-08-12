@@ -6,3 +6,5 @@ coverage
 .idea/tasks.xml
 .idea/shelf
 .idea/dictionaries
+/.husky/
+/.idea/

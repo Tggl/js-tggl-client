@@ -1,8 +1,7 @@
-import { TgglClient } from './index'
-
 jest.mock('./apiCall')
 
 import { apiCall } from './apiCall'
+import { TgglClient } from './TgglClient'
 
 beforeAll(() => {
   console.error = jest.fn()
