@@ -62,7 +62,7 @@ export class TgglLocalClient<
 
       if (this.pollingInterval && this.pollingInterval > 0) {
         this.timeoutID = setTimeout(async () => {
-          await this.fetchConfig()
+          await this.fetchConfig().catch((err) => console.error(err))
         }, this.pollingInterval)
       }
 
@@ -73,7 +73,7 @@ export class TgglLocalClient<
     } catch (error) {
       if (this.pollingInterval && this.pollingInterval > 0 && !this.timeoutID) {
         this.timeoutID = setTimeout(async () => {
-          await this.fetchConfig()
+          await this.fetchConfig().catch((err) => console.error(err))
         }, this.pollingInterval)
       }
 
