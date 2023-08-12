@@ -9,27 +9,62 @@ export class TgglLocalClient<
 > {
   private url: string
   private config: Map<TgglFlagSlug<TFlags>, Flag>
+  private pollingInterval?: number
+  private timeoutID?: ReturnType<typeof setTimeout>
+  private fetchID = 0
 
   constructor(
     private apiKey: string,
     options: {
       url?: string
       initialConfig?: Map<TgglFlagSlug<TFlags>, Flag>
+      pollingInterval?: number
     } = {}
   ) {
     checkApiKey(apiKey)
 
     this.url = options.url ?? 'https://api.tggl.io/config'
     this.config = options.initialConfig ?? new Map()
+    this.pollingInterval = options.pollingInterval
+  }
+
+  startPolling(pollingInterval: number) {
+    this.pollingInterval = pollingInterval
+    this.fetchConfig()
+  }
+
+  stopPolling() {
+    this.pollingInterval = undefined
+    if (this.timeoutID) {
+      clearTimeout(this.timeoutID)
+      this.timeoutID = undefined
+    }
   }
 
   async fetchConfig() {
     try {
+      if (this.timeoutID) {
+        clearTimeout(this.timeoutID)
+        this.timeoutID = undefined
+      }
+
+      const fetchID = ++this.fetchID
+
       const response = await apiCall({
         url: this.url,
         apiKey: this.apiKey,
         method: 'get',
       })
+
+      if (fetchID !== this.fetchID) {
+        return
+      }
+
+      if (this.pollingInterval && this.pollingInterval > 0) {
+        this.timeoutID = setTimeout(async () => {
+          await this.fetchConfig()
+        }, this.pollingInterval)
+      }
 
       this.config.clear()
       for (const flag of response) {
