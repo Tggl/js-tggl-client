@@ -71,6 +71,12 @@ export class TgglLocalClient<
         this.config.set(flag.slug, flag)
       }
     } catch (error) {
+      if (this.pollingInterval && this.pollingInterval > 0 && !this.timeoutID) {
+        this.timeoutID = setTimeout(async () => {
+          await this.fetchConfig()
+        }, this.pollingInterval)
+      }
+
       throw new Error(
         // @ts-ignore
         `Invalid response from Tggl: ${error.error ?? error.message}`
