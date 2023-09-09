@@ -14,6 +14,10 @@ export class TgglClient<
   private pollingInterval?: number
   private timeoutID?: ReturnType<typeof setTimeout>
   private fetchID = 0
+  private onResultChangeCallbacks = new Map<
+    number,
+    (flags: Partial<TFlags>) => void
+  >()
 
   constructor(
     private apiKey: string,
@@ -47,6 +51,15 @@ export class TgglClient<
       },
       { cache: false }
     )
+  }
+
+  onResultChange(callback: (flags: Partial<TFlags>) => void) {
+    const id = Math.random()
+    this.onResultChangeCallbacks.set(id, callback)
+
+    return () => {
+      this.onResultChangeCallbacks.delete(id)
+    }
   }
 
   startPolling(pollingInterval: number) {
@@ -83,8 +96,23 @@ export class TgglClient<
         }, this.pollingInterval)
       }
 
+      const resultChanged =
+        this.onResultChangeCallbacks.size > 0 &&
+        (Object.keys(response).length !== Object.keys(this.flags).length ||
+          !Object.keys(response).every(
+            (key: string) =>
+              JSON.stringify(this.flags[key as keyof TFlags]) ===
+              JSON.stringify(response[key as keyof TFlags])
+          ))
+
       this.context = context
       this.flags = response
+
+      if (resultChanged) {
+        for (const callback of this.onResultChangeCallbacks.values()) {
+          callback(this.flags)
+        }
+      }
     } catch (error) {
       console.error(error)
     }
