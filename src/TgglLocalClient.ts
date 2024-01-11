@@ -21,14 +21,8 @@ export class TgglLocalClient<
     number,
     (config: Map<TgglFlagSlug<TFlags>, Flag>) => void
   >()
-  private onFetchSuccessfulCallbacks = new Map<
-    number,
-    () => void
-  >()
-  private onFetchFailCallbacks = new Map<
-    number,
-    (error: Error) => void
-  >()
+  private onFetchSuccessfulCallbacks = new Map<number, () => void>()
+  private onFetchFailCallbacks = new Map<number, (error: Error) => void>()
 
   constructor(
     private apiKey: string,
