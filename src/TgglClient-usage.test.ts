@@ -30,11 +30,30 @@ describe('stateful client', () => {
     expect(client.get('flagC', 'bar')).toBe(false)
     expect(client.get('flagD', 'bar')).toBe('bar')
 
+    expect(apiCall).toHaveBeenCalledTimes(1)
     expect(apiCall).toHaveBeenCalledWith({
       body: [{ foo: 'bar' }],
       apiKey: 'API_KEY',
       method: 'post',
       url: 'https://api.tggl.io/flags',
+    })
+  })
+
+  test('Make API call to the right url', async () => {
+    // @ts-ignore
+    apiCall.mockResolvedValue([{ flagA: null, flagB: 'foo', flagC: false }])
+
+    const client = new TgglClient('API_KEY', {
+      url: 'http://my-domain.com/foo',
+    })
+    await expect(client.setContext({ foo: 'bar' })).resolves.toBeUndefined()
+
+    expect(apiCall).toHaveBeenCalledTimes(1)
+    expect(apiCall).toHaveBeenCalledWith({
+      body: [{ foo: 'bar' }],
+      apiKey: 'API_KEY',
+      method: 'post',
+      url: 'http://my-domain.com/foo',
     })
   })
 
@@ -98,6 +117,30 @@ describe('stateless client', () => {
 
       expect(apiCall).toHaveBeenCalledWith({
         body: [{ foo: 'bar' }],
+        apiKey: 'API_KEY',
+        method: 'post',
+        url: 'https://api.tggl.io/flags',
+      })
+    })
+
+    test('Calls are batched', async () => {
+      // @ts-ignore
+      apiCall.mockResolvedValue([
+        { flagA: null, flagB: 'foo', flagC: false },
+        { flagA: null },
+        { flagC: true },
+      ])
+
+      const client = new TgglClient('API_KEY')
+      await Promise.all([
+        client.evalContext({ foo: 'bar' }),
+        client.evalContext({ foo: 'baz' }),
+        client.evalContext({ foo: 'bor' }),
+      ])
+
+      expect(apiCall).toHaveBeenCalledTimes(1)
+      expect(apiCall).toHaveBeenCalledWith({
+        body: [{ foo: 'bar' }, { foo: 'baz' }, { foo: 'bor' }],
         apiKey: 'API_KEY',
         method: 'post',
         url: 'https://api.tggl.io/flags',

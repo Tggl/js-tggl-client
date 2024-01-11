@@ -1,3 +1,3 @@
 # Tggl Javascript Client
 
-[Read documentation](https://doc.tggl.io/docs/developers/sdks/node)
+[Read documentation](https://tggl.io/developers/sdks/node)

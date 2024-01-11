@@ -1,4 +1,4 @@
-import { TgglContext, TgglFlags } from './types'
+import { TgglContext, TgglFlags, TgglFlagSlug } from './types'
 import { TgglResponse } from './TgglResponse'
 import DataLoader from 'dataloader'
 import { assertValidContext, checkApiKey } from './validation'
@@ -11,13 +11,21 @@ export class TgglClient<
   private context: Partial<TContext> = {}
   private url: string
   private loader: DataLoader<Partial<TContext>, Partial<TFlags>>
-  private pollingInterval?: number
+  private pollingInterval: number = 0
   private timeoutID?: ReturnType<typeof setTimeout>
   private fetchID = 0
+  private fetchPromise?: Promise<number>
+  private lastSuccessfulFetchID = 0
+  private lastSuccessfulFetchResponse: {
+    context: Partial<TContext>
+    response: Partial<TFlags>
+  } | null = null
   private onResultChangeCallbacks = new Map<
     number,
     (flags: Partial<TFlags>) => void
   >()
+  private onFetchSuccessfulCallbacks = new Map<number, () => void>()
+  private onFetchFailCallbacks = new Map<number, (error: Error) => void>()
 
   constructor(
     private apiKey: string,
@@ -31,7 +39,6 @@ export class TgglClient<
     checkApiKey(apiKey)
 
     this.url = options.url ?? 'https://api.tggl.io/flags'
-    this.pollingInterval = options.pollingInterval
 
     this.loader = new DataLoader<Partial<TContext>, Partial<TFlags>>(
       async (contexts) => {
@@ -51,6 +58,8 @@ export class TgglClient<
       },
       { cache: false }
     )
+
+    this.startPolling(options.pollingInterval ?? 0)
   }
 
   onResultChange(callback: (flags: Partial<TFlags>) => void) {
@@ -62,59 +71,126 @@ export class TgglClient<
     }
   }
 
+  onFetchSuccessful(callback: () => void) {
+    const id = Math.random()
+    this.onFetchSuccessfulCallbacks.set(id, callback)
+
+    return () => {
+      this.onFetchSuccessfulCallbacks.delete(id)
+    }
+  }
+
+  onFetchFail(callback: (error: Error) => void) {
+    const id = Math.random()
+    this.onFetchFailCallbacks.set(id, callback)
+
+    return () => {
+      this.onFetchFailCallbacks.delete(id)
+    }
+  }
+
   startPolling(pollingInterval: number) {
     this.pollingInterval = pollingInterval
-    this.setContext(this.context)
+
+    if (pollingInterval > 0) {
+      this.setContext(this.context)
+    } else {
+      this.cancelNextPolling()
+    }
   }
 
   stopPolling() {
-    this.pollingInterval = undefined
+    this.startPolling(0)
+  }
+
+  private planNextPolling() {
+    if (this.pollingInterval > 0 && !this.timeoutID) {
+      this.timeoutID = setTimeout(async () => {
+        await this.setContext(this.context)
+      }, this.pollingInterval)
+    }
+  }
+
+  private cancelNextPolling() {
     if (this.timeoutID) {
       clearTimeout(this.timeoutID)
       this.timeoutID = undefined
     }
   }
 
+  private async waitForLastFetchToFinish() {
+    while (this.fetchPromise && this.fetchID !== (await this.fetchPromise)) {}
+  }
+
   async setContext(context: Partial<TContext>) {
+    const fetchID = ++this.fetchID
+
+    let done: () => void = () => null
+    this.fetchPromise = new Promise((resolve) => {
+      done = () => resolve(fetchID)
+    })
+
     try {
-      if (this.timeoutID) {
-        clearTimeout(this.timeoutID)
-        this.timeoutID = undefined
-      }
+      this.cancelNextPolling()
 
       assertValidContext(context)
 
-      const fetchID = ++this.fetchID
       const response = await this.loader.load(context)
+
+      for (const callback of this.onFetchSuccessfulCallbacks.values()) {
+        callback()
+      }
+
+      if (fetchID > this.lastSuccessfulFetchID) {
+        this.lastSuccessfulFetchID = fetchID
+        this.lastSuccessfulFetchResponse = { context, response }
+      }
+
+      // If another fetch was started while this one was running
       if (fetchID !== this.fetchID) {
+        await this.waitForLastFetchToFinish()
+
         return
       }
-
-      if (this.pollingInterval && this.pollingInterval > 0) {
-        this.timeoutID = setTimeout(async () => {
-          await this.setContext(context)
-        }, this.pollingInterval)
-      }
-
-      const resultChanged =
-        this.onResultChangeCallbacks.size > 0 &&
-        (Object.keys(response).length !== Object.keys(this.flags).length ||
-          !Object.keys(response).every(
-            (key: string) =>
-              JSON.stringify(this.flags[key as keyof TFlags]) ===
-              JSON.stringify(response[key as keyof TFlags])
-          ))
-
-      this.context = context
-      this.flags = response
-
-      if (resultChanged) {
-        for (const callback of this.onResultChangeCallbacks.values()) {
-          callback(this.flags)
-        }
-      }
     } catch (error) {
+      for (const callback of this.onFetchFailCallbacks.values()) {
+        callback(error as Error)
+      }
       console.error(error)
+    } finally {
+      // If this is the last fetch that was started, we can update the config
+      if (fetchID === this.fetchID && this.lastSuccessfulFetchResponse) {
+        this.setRawFlags(this.lastSuccessfulFetchResponse)
+      }
+
+      done()
+      this.planNextPolling()
+    }
+  }
+
+  private setRawFlags({
+    context,
+    response,
+  }: {
+    context: Partial<TContext>
+    response: Partial<TFlags>
+  }) {
+    const resultChanged =
+      this.onResultChangeCallbacks.size > 0 &&
+      (Object.keys(response).length !== Object.keys(this.flags).length ||
+        !Object.keys(response).every(
+          (key: string) =>
+            JSON.stringify(this.flags[key as keyof TFlags]) ===
+            JSON.stringify(response[key as keyof TFlags])
+        ))
+
+    this.context = context
+    this.flags = response
+
+    if (resultChanged) {
+      for (const callback of this.onResultChangeCallbacks.values()) {
+        callback(this.flags)
+      }
     }
   }
 
