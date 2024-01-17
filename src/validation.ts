@@ -11,21 +11,3 @@ export const assertValidContext = (context: any) => {
     throw new Error('Invalid Tggl context, context cannot be an array')
   }
 }
-
-export const checkApiKey = (apiKey: any) => {
-  if (apiKey === undefined) {
-    console.error('Could not properly create Tggl client, missing API Key')
-  }
-
-  if (typeof apiKey !== 'string') {
-    console.error(
-      'Could not properly create Tggl client, API Key must be a string'
-    )
-  }
-
-  if (!apiKey) {
-    console.error(
-      'Could not properly create Tggl client, API Key cannot be empty'
-    )
-  }
-}

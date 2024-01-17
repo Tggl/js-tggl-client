@@ -1,6 +1,6 @@
 import { TgglContext, TgglFlags, TgglFlagSlug, TgglFlagValue } from './types'
 import { evalFlag, Flag } from 'tggl-core'
-import { assertValidContext, checkApiKey } from './validation'
+import { assertValidContext } from './validation'
 import { apiCall } from './apiCall'
 
 export class TgglLocalClient<
@@ -25,15 +25,13 @@ export class TgglLocalClient<
   private onFetchFailCallbacks = new Map<number, (error: Error) => void>()
 
   constructor(
-    private apiKey: string,
+    private apiKey?: string | null,
     options: {
       url?: string
       initialConfig?: Map<TgglFlagSlug<TFlags>, Flag>
       pollingInterval?: number
     } = {}
   ) {
-    checkApiKey(apiKey)
-
     this.url = options.url ?? 'https://api.tggl.io/config'
     this.config = options.initialConfig ?? new Map()
 

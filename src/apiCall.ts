@@ -8,21 +8,28 @@ export const apiCall = ({
 }: {
   url: string
   method: 'post' | 'get'
-  apiKey: string
+  apiKey?: string | null
   body?: any
 }) => {
   if (typeof fetch !== 'undefined') {
     return fetch(url, {
       method,
       body: body ? JSON.stringify(body) : undefined,
-      headers: body
-        ? {
-            'Content-Type': 'application/json',
-            'x-tggl-api-key': apiKey,
-          }
-        : {
-            'x-tggl-api-key': apiKey,
-          },
+      headers:
+        body && apiKey
+          ? {
+              'Content-Type': 'application/json',
+              'x-tggl-api-key': apiKey,
+            }
+          : body
+          ? {
+              'Content-Type': 'application/json',
+            }
+          : apiKey
+          ? {
+              'x-tggl-api-key': apiKey,
+            }
+          : {},
     }).then(async (r) => {
       if (r.ok) {
         return r.json()
@@ -42,15 +49,23 @@ export const apiCall = ({
         url,
         {
           method,
-          headers: body
-            ? {
-                'x-tggl-api-key': apiKey,
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(postData),
-              }
-            : {
-                'x-tggl-api-key': apiKey,
-              },
+          headers:
+            body && apiKey
+              ? {
+                  'x-tggl-api-key': apiKey,
+                  'Content-Type': 'application/json',
+                  'Content-Length': Buffer.byteLength(postData),
+                }
+              : body
+              ? {
+                  'Content-Type': 'application/json',
+                  'Content-Length': Buffer.byteLength(postData),
+                }
+              : apiKey
+              ? {
+                  'x-tggl-api-key': apiKey,
+                }
+              : {},
         },
         (res) => {
           let data = ''

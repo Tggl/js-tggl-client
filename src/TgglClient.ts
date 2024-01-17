@@ -1,7 +1,7 @@
-import { TgglContext, TgglFlags, TgglFlagSlug } from './types'
+import { TgglContext, TgglFlags } from './types'
 import { TgglResponse } from './TgglResponse'
 import DataLoader from 'dataloader'
-import { assertValidContext, checkApiKey } from './validation'
+import { assertValidContext } from './validation'
 import { apiCall } from './apiCall'
 
 export class TgglClient<
@@ -28,7 +28,7 @@ export class TgglClient<
   private onFetchFailCallbacks = new Map<number, (error: Error) => void>()
 
   constructor(
-    private apiKey: string,
+    private apiKey?: string | null,
     options: {
       url?: string
       initialActiveFlags?: Partial<TFlags>
@@ -36,7 +36,6 @@ export class TgglClient<
     } = {}
   ) {
     super(options.initialActiveFlags)
-    checkApiKey(apiKey)
 
     this.url = options.url ?? 'https://api.tggl.io/flags'
 
