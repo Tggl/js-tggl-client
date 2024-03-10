@@ -39,8 +39,8 @@ export const apiCall = ({
     })
   } else {
     const httpModule: { request: typeof request } = url.startsWith('https')
-      ? require('https')
-      : require('http')
+      ? require(['h', 'ps'].join('tt'))
+      : require(['h', 'p'].join('tt'))
 
     return new Promise((resolve, reject) => {
       const postData = body ? JSON.stringify(body) : ''
