@@ -2,12 +2,12 @@
   "compilerOptions": {
     "target": "es5",
     "declaration": true,
-    "declarationMap": true,
+    "declarationMap": false,
     "module": "commonjs",
     "lib": [
       "DOM","es6"],
     "allowJs": false,
-    "sourceMap": true,
+    "sourceMap": false,
     "outDir": "lib",
     "rootDir": "src",
     "strict": true,

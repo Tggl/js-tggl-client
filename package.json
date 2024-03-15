@@ -7,6 +7,9 @@
     "feature flag"
   ],
   "main": "lib/index.js",
+  "browser": {
+    "./lib/apiCall.js": "./lib/apiCallBrowser.js"
+  },
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",

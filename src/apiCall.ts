@@ -1,4 +1,5 @@
-import type { request } from 'http'
+import http from 'http'
+import https from 'https'
 
 export const apiCall = ({
   apiKey,
@@ -10,87 +11,57 @@ export const apiCall = ({
   method: 'post' | 'get'
   apiKey?: string | null
   body?: any
-}) => {
-  if (typeof fetch !== 'undefined') {
-    return fetch(url, {
-      method,
-      body: body ? JSON.stringify(body) : undefined,
-      headers:
-        body && apiKey
-          ? {
-              'Content-Type': 'application/json',
-              'x-tggl-api-key': apiKey,
-            }
-          : body
-          ? {
-              'Content-Type': 'application/json',
-            }
-          : apiKey
-          ? {
-              'x-tggl-api-key': apiKey,
-            }
-          : {},
-    }).then(async (r) => {
-      if (r.ok) {
-        return r.json()
-      }
+}): Promise<unknown> => {
+  const httpModule = url.startsWith('https') ? https : http
 
-      throw await r.json()
-    })
-  } else {
-    const httpModule: { request: typeof request } = url.startsWith('https')
-      ? require(['h', 'ps'].join('tt'))
-      : require(['h', 'p'].join('tt'))
+  return new Promise((resolve, reject) => {
+    const postData = body ? JSON.stringify(body) : ''
 
-    return new Promise((resolve, reject) => {
-      const postData = body ? JSON.stringify(body) : ''
-
-      const req = httpModule.request(
-        url,
-        {
-          method,
-          headers:
-            body && apiKey
-              ? {
-                  'x-tggl-api-key': apiKey,
-                  'Content-Type': 'application/json',
-                  'Content-Length': Buffer.byteLength(postData),
-                }
-              : body
-              ? {
-                  'Content-Type': 'application/json',
-                  'Content-Length': Buffer.byteLength(postData),
-                }
-              : apiKey
-              ? {
-                  'x-tggl-api-key': apiKey,
-                }
-              : {},
-        },
-        (res) => {
-          let data = ''
-
-          res.on('data', (chunk) => (data += chunk))
-
-          res.on('end', () => {
-            try {
-              if (res.statusCode !== 200) {
-                reject(JSON.parse(data))
-              } else {
-                resolve(JSON.parse(data))
+    const req = httpModule.request(
+      url,
+      {
+        method,
+        headers:
+          body && apiKey
+            ? {
+                'x-tggl-api-key': apiKey,
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData),
               }
-            } catch (error) {
-              reject(error)
-            }
-          })
-        }
-      )
+            : body
+            ? {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData),
+              }
+            : apiKey
+            ? {
+                'x-tggl-api-key': apiKey,
+              }
+            : {},
+      },
+      (res) => {
+        let data = ''
 
-      req.on('error', reject)
-      if (body) {
-        req.write(postData)
+        res.on('data', (chunk) => (data += chunk))
+
+        res.on('end', () => {
+          try {
+            if (res.statusCode !== 200) {
+              reject(JSON.parse(data))
+            } else {
+              resolve(JSON.parse(data))
+            }
+          } catch (error) {
+            reject(error)
+          }
+        })
       }
-      req.end()
-    })
-  }
+    )
+
+    req.on('error', reject)
+    if (body) {
+      req.write(postData)
+    }
+    req.end()
+  })
 }

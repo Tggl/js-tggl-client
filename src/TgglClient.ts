@@ -42,12 +42,12 @@ export class TgglClient<
     this.loader = new DataLoader<Partial<TContext>, Partial<TFlags>>(
       async (contexts) => {
         try {
-          return await apiCall({
+          return (await apiCall({
             url: this.url,
             apiKey: this.apiKey,
             body: contexts,
             method: 'post',
-          })
+          })) as Promise<any>
         } catch (error) {
           throw new Error(
             // @ts-ignore
