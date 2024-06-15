@@ -26,6 +26,7 @@ export class TgglClient<
   >()
   private onFetchSuccessfulCallbacks = new Map<number, () => void>()
   private onFetchFailCallbacks = new Map<number, (error: Error) => void>()
+  private log = true
 
   constructor(
     private apiKey?: string | null,
@@ -33,11 +34,13 @@ export class TgglClient<
       url?: string
       initialActiveFlags?: Partial<TFlags>
       pollingInterval?: number
+      log?: boolean
     } = {}
   ) {
     super(options.initialActiveFlags)
 
     this.url = options.url ?? 'https://api.tggl.io/flags'
+    this.log = options.log ?? true
 
     this.loader = new DataLoader<Partial<TContext>, Partial<TFlags>>(
       async (contexts) => {
@@ -155,7 +158,9 @@ export class TgglClient<
       for (const callback of this.onFetchFailCallbacks.values()) {
         callback(error as Error)
       }
-      console.error(error)
+      if (this.log) {
+        console.error(error)
+      }
     } finally {
       // If this is the last fetch that was started, we can update the config
       if (fetchID === this.fetchID && this.lastSuccessfulFetchResponse) {
@@ -214,7 +219,9 @@ export class TgglClient<
         return new TgglResponse(response)
       })
     } catch (error) {
-      console.error(error)
+      if (this.log) {
+        console.error(error)
+      }
 
       return contexts.map(() => new TgglResponse())
     }

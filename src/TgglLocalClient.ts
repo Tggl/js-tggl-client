@@ -23,6 +23,7 @@ export class TgglLocalClient<
   >()
   private onFetchSuccessfulCallbacks = new Map<number, () => void>()
   private onFetchFailCallbacks = new Map<number, (error: Error) => void>()
+  private log: boolean = true
 
   constructor(
     private apiKey?: string | null,
@@ -30,10 +31,12 @@ export class TgglLocalClient<
       url?: string
       initialConfig?: Map<TgglFlagSlug<TFlags>, Flag>
       pollingInterval?: number
+      log?: boolean
     } = {}
   ) {
     this.url = options.url ?? 'https://api.tggl.io/config'
     this.config = options.initialConfig ?? new Map()
+    this.log = options.log ?? true
 
     this.startPolling(options.pollingInterval ?? 0)
   }
@@ -69,7 +72,11 @@ export class TgglLocalClient<
     this.pollingInterval = pollingInterval
 
     if (pollingInterval > 0) {
-      this.fetchConfig().catch((err) => console.error(err))
+      this.fetchConfig().catch((err) => {
+        if (this.log) {
+          console.error(err)
+        }
+      })
     } else {
       this.cancelNextPolling()
     }
@@ -82,7 +89,11 @@ export class TgglLocalClient<
   private planNextPolling() {
     if (this.pollingInterval > 0 && !this.timeoutID) {
       this.timeoutID = setTimeout(async () => {
-        await this.fetchConfig().catch((err) => console.error(err))
+        await this.fetchConfig().catch((err) => {
+          if (this.log) {
+            console.error(err)
+          }
+        })
       }, this.pollingInterval)
     }
   }
