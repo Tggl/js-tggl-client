@@ -13,6 +13,10 @@ export class TgglResponse<TFlags extends TgglFlags = TgglFlags> {
     this.reporting = options.reporting ?? null
   }
 
+  disableReporting() {
+    this.reporting = null
+  }
+
   isActive(slug: TgglFlagSlug<TFlags>): boolean {
     const active = this.flags[slug as keyof TFlags] !== undefined
 
