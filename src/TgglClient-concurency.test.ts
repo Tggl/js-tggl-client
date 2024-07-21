@@ -1,4 +1,5 @@
 jest.mock('./apiCall')
+jest.mock('./TgglReporting')
 
 class DL {
   constructor(private batch: (contexts: any[]) => any) {}

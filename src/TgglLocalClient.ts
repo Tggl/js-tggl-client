@@ -2,6 +2,7 @@ import { TgglContext, TgglFlags, TgglFlagSlug, TgglFlagValue } from './types'
 import { evalFlag, Flag } from 'tggl-core'
 import { assertValidContext } from './validation'
 import { apiCall } from './apiCall'
+import { TgglReporting } from './TgglReporting'
 
 export class TgglLocalClient<
   TFlags extends TgglFlags = TgglFlags,
@@ -24,6 +25,7 @@ export class TgglLocalClient<
   private onFetchSuccessfulCallbacks = new Map<number, () => void>()
   private onFetchFailCallbacks = new Map<number, (error: Error) => void>()
   private log: boolean = true
+  protected reporting: TgglReporting | null
 
   constructor(
     private apiKey?: string | null,
@@ -32,11 +34,26 @@ export class TgglLocalClient<
       initialConfig?: Map<TgglFlagSlug<TFlags>, Flag>
       pollingInterval?: number
       log?: boolean
+      reporting?: boolean | { app?: string; url?: string }
     } = {}
   ) {
     this.url = options.url ?? 'https://api.tggl.io/config'
     this.config = options.initialConfig ?? new Map()
     this.log = options.log ?? true
+    this.reporting =
+      options.reporting === false || !apiKey
+        ? null
+        : new TgglReporting({
+            apiKey,
+            app:
+              typeof options.reporting === 'object'
+                ? `TgglLocalClient/${options.reporting.app}`
+                : 'TgglLocalClient',
+            url:
+              typeof options.reporting === 'object'
+                ? options.reporting.url
+                : undefined,
+          })
 
     this.startPolling(options.pollingInterval ?? 0)
   }
@@ -196,7 +213,16 @@ export class TgglLocalClient<
   isActive(context: Partial<TContext>, slug: TgglFlagSlug<TFlags>) {
     assertValidContext(context)
     const flag = this.config.get(slug)
-    return flag ? evalFlag(context, flag) !== undefined : false
+    const value = flag ? evalFlag(context, flag) : undefined
+    const active = value !== undefined
+
+    this.reporting?.reportFlag(String(slug), {
+      active,
+      value,
+      stack: Error().stack?.split('\n').slice(2).join('\n'),
+    })
+
+    return active
   }
 
   get<TSlug extends TgglFlagSlug<TFlags>>(
@@ -221,7 +247,15 @@ export class TgglLocalClient<
   ): TgglFlagValue<TSlug, TFlags> | TDefaultValue | undefined {
     assertValidContext(context)
     const flag = this.config.get(slug)
-    const result = flag ? evalFlag(context, flag) : undefined
-    return result === undefined ? defaultValue : result
+    const value = flag ? evalFlag(context, flag) : undefined
+
+    this.reporting?.reportFlag(String(slug), {
+      active: value !== undefined,
+      default: defaultValue,
+      value,
+      stack: Error().stack?.split('\n').slice(2).join('\n'),
+    })
+
+    return value === undefined ? defaultValue : value
   }
 }

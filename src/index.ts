@@ -7,3 +7,4 @@ export type {
 export { TgglResponse } from './TgglResponse'
 export { TgglClient } from './TgglClient'
 export { TgglLocalClient } from './TgglLocalClient'
+export { TgglReporting } from './TgglReporting'

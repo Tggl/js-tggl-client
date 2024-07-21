@@ -3,6 +3,7 @@ import { TgglResponse } from './TgglResponse'
 import DataLoader from 'dataloader'
 import { assertValidContext } from './validation'
 import { apiCall } from './apiCall'
+import { TgglReporting } from './TgglReporting'
 
 export class TgglClient<
   TFlags extends TgglFlags = TgglFlags,
@@ -35,9 +36,25 @@ export class TgglClient<
       initialActiveFlags?: Partial<TFlags>
       pollingInterval?: number
       log?: boolean
+      reporting?: boolean | { app?: string; url?: string }
     } = {}
   ) {
-    super(options.initialActiveFlags)
+    super(options.initialActiveFlags, {
+      reporting:
+        options.reporting === false || !apiKey
+          ? null
+          : new TgglReporting({
+              apiKey,
+              app:
+                typeof options.reporting === 'object'
+                  ? `TgglClient/${options.reporting.app}`
+                  : 'TgglClient',
+              url:
+                typeof options.reporting === 'object'
+                  ? options.reporting.url
+                  : undefined,
+            }),
+    })
 
     this.url = options.url ?? 'https://api.tggl.io/flags'
     this.log = options.log ?? true
@@ -216,14 +233,16 @@ export class TgglClient<
           throw response
         }
 
-        return new TgglResponse(response)
+        return new TgglResponse(response, { reporting: this.reporting })
       })
     } catch (error) {
       if (this.log) {
         console.error(error)
       }
 
-      return contexts.map(() => new TgglResponse())
+      return contexts.map(
+        () => new TgglResponse({}, { reporting: this.reporting })
+      )
     }
   }
 }

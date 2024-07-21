@@ -4,6 +4,7 @@ import { TgglLocalClient } from './TgglLocalClient'
 
 jest.mock('tggl-core')
 jest.mock('./apiCall')
+jest.mock('./TgglReporting')
 jest.useFakeTimers()
 
 const runTimers = async (ms?: number) => {

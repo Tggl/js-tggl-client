@@ -1,10 +1,28 @@
 import { TgglFlags, TgglFlagSlug, TgglFlagValue } from './types'
+import { TgglReporting } from './TgglReporting'
 
 export class TgglResponse<TFlags extends TgglFlags = TgglFlags> {
-  constructor(protected flags: Partial<TFlags> = {}) {}
+  protected reporting: TgglReporting | null
+
+  constructor(
+    protected flags: Partial<TFlags> = {},
+    options: {
+      reporting?: TgglReporting | null
+    } = {}
+  ) {
+    this.reporting = options.reporting ?? null
+  }
 
   isActive(slug: TgglFlagSlug<TFlags>): boolean {
-    return this.flags[slug as keyof TFlags] !== undefined
+    const active = this.flags[slug as keyof TFlags] !== undefined
+
+    this.reporting?.reportFlag(String(slug), {
+      active,
+      value: this.flags[slug as keyof TFlags],
+      stack: Error().stack?.split('\n').slice(2).join('\n'),
+    })
+
+    return active
   }
 
   get<TSlug extends TgglFlagSlug<TFlags>>(
@@ -21,6 +39,13 @@ export class TgglResponse<TFlags extends TgglFlags = TgglFlags> {
     slug: TSlug,
     defaultValue?: TDefaultValue
   ): TgglFlagValue<TSlug, TFlags> | TDefaultValue | undefined {
+    this.reporting?.reportFlag(String(slug), {
+      active: this.flags[slug as keyof TFlags] !== undefined,
+      default: defaultValue,
+      value: this.flags[slug as keyof TFlags],
+      stack: Error().stack?.split('\n').slice(2).join('\n'),
+    })
+
     // @ts-ignore
     return this.flags[slug as keyof TFlags] === undefined
       ? defaultValue
