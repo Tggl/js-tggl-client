@@ -1,6 +1,6 @@
 import { apiCall } from './apiCall'
 
-export const PACKAGE_VERSION = '1.15.2'
+export const PACKAGE_VERSION = '1.15.3'
 
 export class TgglReporting {
   private app: string | null
@@ -46,44 +46,48 @@ export class TgglReporting {
   }
 
   private async sendReport() {
-    const payload: Record<string, any> = {}
+    try {
+      const payload: Record<string, any> = {}
 
-    if (Object.keys(this.flagsToReport).length) {
-      const flagsToReport = { ...this.flagsToReport }
-      this.flagsToReport = {}
+      if (Object.keys(this.flagsToReport).length) {
+        const flagsToReport = { ...this.flagsToReport }
+        this.flagsToReport = {}
 
-      payload.clients = [
-        {
-          id: `${this.appPrefix ?? ''}${this.app && this.appPrefix ? '/' : ''}${
-            this.app ?? ''
-          }`,
-          flags: Object.entries(flagsToReport).reduce(
-            (acc, [key, value]) => {
-              acc[key] = [...value.values()]
-              return acc
-            },
-            {} as Record<
-              string,
-              {
-                active: boolean
-                value?: any
-                default?: any
-                count: number
-                stack?: string
-              }[]
-            >
-          ),
-        },
-      ]
-    }
+        payload.clients = [
+          {
+            id: `${this.appPrefix ?? ''}${
+              this.app && this.appPrefix ? '/' : ''
+            }${this.app ?? ''}`,
+            flags: Object.entries(flagsToReport).reduce(
+              (acc, [key, value]) => {
+                acc[key] = [...value.values()]
+                return acc
+              },
+              {} as Record<
+                string,
+                {
+                  active: boolean
+                  value?: any
+                  default?: any
+                  count: number
+                  stack?: string
+                }[]
+              >
+            ),
+          },
+        ]
+      }
 
-    if (Object.keys(payload).length) {
-      await apiCall({
-        url: this.url,
-        apiKey: this.apiKey,
-        method: 'post',
-        body: payload,
-      })
+      if (Object.keys(payload).length) {
+        await apiCall({
+          url: this.url,
+          apiKey: this.apiKey,
+          method: 'post',
+          body: payload,
+        })
+      }
+    } catch (error) {
+      // Do nothing
     }
 
     if (!this.disabled) {
@@ -102,24 +106,28 @@ export class TgglReporting {
       stack?: string
     }
   ) {
-    const key = `${data.active ? '1' : '0'}${JSON.stringify(
-      data.value
-    )}${JSON.stringify(data.default)}${data.stack}`
+    try {
+      const key = `${data.active ? '1' : '0'}${JSON.stringify(
+        data.value
+      )}${JSON.stringify(data.default)}${data.stack}`
 
-    this.flagsToReport[slug] ??= new Map()
+      this.flagsToReport[slug] ??= new Map()
 
-    const value =
-      this.flagsToReport[slug].get(key) ??
-      this.flagsToReport[slug]
-        .set(key, {
-          active: data.active,
-          value: data.value,
-          default: data.default,
-          count: 0,
-          stack: data.stack,
-        })
-        .get(key)!
+      const value =
+        this.flagsToReport[slug].get(key) ??
+        this.flagsToReport[slug]
+          .set(key, {
+            active: data.active,
+            value: data.value,
+            default: data.default,
+            count: 0,
+            stack: data.stack,
+          })
+          .get(key)!
 
-    value.count++
+      value.count++
+    } catch (error) {
+      // Do nothing
+    }
   }
 }
