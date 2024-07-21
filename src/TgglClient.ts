@@ -3,7 +3,7 @@ import { TgglResponse } from './TgglResponse'
 import DataLoader from 'dataloader'
 import { assertValidContext } from './validation'
 import { apiCall } from './apiCall'
-import { TgglReporting } from './TgglReporting'
+import { PACKAGE_VERSION, TgglReporting } from './TgglReporting'
 
 export class TgglClient<
   TFlags extends TgglFlags = TgglFlags,
@@ -47,8 +47,9 @@ export class TgglClient<
               apiKey,
               app:
                 typeof options.reporting === 'object'
-                  ? `TgglClient/${options.reporting.app}`
-                  : 'TgglClient',
+                  ? options.reporting.app
+                  : undefined,
+              appPrefix: `js-client:${PACKAGE_VERSION}/TgglClient`,
               url:
                 typeof options.reporting === 'object'
                   ? options.reporting.url

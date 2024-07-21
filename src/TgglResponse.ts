@@ -14,7 +14,14 @@ export class TgglResponse<TFlags extends TgglFlags = TgglFlags> {
   }
 
   disableReporting() {
+    this.reporting?.disable()
     this.reporting = null
+  }
+
+  detachReporting() {
+    const reporting = this.reporting
+    this.reporting = null
+    return reporting
   }
 
   isActive(slug: TgglFlagSlug<TFlags>): boolean {

@@ -2,7 +2,7 @@ import { TgglContext, TgglFlags, TgglFlagSlug, TgglFlagValue } from './types'
 import { evalFlag, Flag } from 'tggl-core'
 import { assertValidContext } from './validation'
 import { apiCall } from './apiCall'
-import { TgglReporting } from './TgglReporting'
+import { PACKAGE_VERSION, TgglReporting } from './TgglReporting'
 
 export class TgglLocalClient<
   TFlags extends TgglFlags = TgglFlags,
@@ -47,8 +47,9 @@ export class TgglLocalClient<
             apiKey,
             app:
               typeof options.reporting === 'object'
-                ? `TgglLocalClient/${options.reporting.app}`
-                : 'TgglLocalClient',
+                ? options.reporting.app
+                : undefined,
+            appPrefix: `js-client:${PACKAGE_VERSION}/TgglLocalClient`,
             url:
               typeof options.reporting === 'object'
                 ? options.reporting.url

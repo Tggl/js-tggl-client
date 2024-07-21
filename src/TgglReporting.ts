@@ -1,11 +1,13 @@
 import { apiCall } from './apiCall'
 
-export const PACKAGE_VERSION = '1.15.1'
+export const PACKAGE_VERSION = '1.15.2'
 
 export class TgglReporting {
   private app: string | null
+  public appPrefix: string | null
   private apiKey: string
   private url: string
+  private disabled = false
   private flagsToReport: Record<
     string,
     Map<
@@ -22,18 +24,25 @@ export class TgglReporting {
 
   constructor({
     app,
+    appPrefix,
     apiKey,
     url,
   }: {
     app?: string
+    appPrefix?: string
     apiKey: string
     url?: string
   }) {
     this.app = app ?? null
+    this.appPrefix = appPrefix ?? null
     this.apiKey = apiKey
     this.url = url ?? 'https://api.tggl.io/report'
 
     this.sendReport()
+  }
+
+  disable() {
+    this.disabled = true
   }
 
   private async sendReport() {
@@ -45,7 +54,9 @@ export class TgglReporting {
 
       payload.clients = [
         {
-          id: `js-client:${PACKAGE_VERSION}${this.app ? `/${this.app}` : ''}`,
+          id: `${this.appPrefix ?? ''}${this.app && this.appPrefix ? '/' : ''}${
+            this.app ?? ''
+          }`,
           flags: Object.entries(flagsToReport).reduce(
             (acc, [key, value]) => {
               acc[key] = [...value.values()]
@@ -75,9 +86,11 @@ export class TgglReporting {
       })
     }
 
-    setTimeout(() => {
-      this.sendReport()
-    }, 4000)
+    if (!this.disabled) {
+      setTimeout(() => {
+        this.sendReport()
+      }, 2000)
+    }
   }
 
   reportFlag(
