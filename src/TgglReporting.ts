@@ -1,6 +1,6 @@
 import { apiCall } from './apiCall'
 
-export const PACKAGE_VERSION = '1.15.0'
+export const PACKAGE_VERSION = '1.15.1'
 
 export class TgglReporting {
   private app: string | null
