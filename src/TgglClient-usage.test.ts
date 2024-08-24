@@ -1,4 +1,5 @@
 jest.mock('./apiCall')
+jest.mock('./TgglReporting')
 
 import { apiCall } from './apiCall'
 import { TgglClient } from './TgglClient'

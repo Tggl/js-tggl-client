@@ -4,6 +4,7 @@ import { TgglLocalClient } from './TgglLocalClient'
 
 jest.mock('tggl-core')
 jest.mock('./apiCall')
+jest.mock('./TgglReporting')
 
 test('Not initialized', () => {
   const client = new TgglLocalClient('API_KEY')

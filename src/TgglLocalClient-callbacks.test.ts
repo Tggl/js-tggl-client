@@ -3,6 +3,7 @@ import { apiCall } from './apiCall'
 import { TgglLocalClient } from './TgglLocalClient'
 
 jest.mock('./apiCall')
+jest.mock('./TgglReporting')
 
 test('Callback should not be called when manually setting config', () => {
   const client = new TgglLocalClient('API_KEY')

@@ -220,7 +220,6 @@ export class TgglLocalClient<
     this.reporting?.reportFlag(String(slug), {
       active,
       value,
-      stack: Error().stack?.split('\n').slice(2).join('\n'),
     })
 
     return active
@@ -248,15 +247,28 @@ export class TgglLocalClient<
   ): TgglFlagValue<TSlug, TFlags> | TDefaultValue | undefined {
     assertValidContext(context)
     const flag = this.config.get(slug)
-    const value = flag ? evalFlag(context, flag) : undefined
+    const rawValue = flag ? evalFlag(context, flag) : undefined
+    const value = rawValue === undefined ? defaultValue : rawValue
 
     this.reporting?.reportFlag(String(slug), {
       active: value !== undefined,
       default: defaultValue,
       value,
-      stack: Error().stack?.split('\n').slice(2).join('\n'),
     })
 
-    return value === undefined ? defaultValue : value
+    return value
+  }
+
+  getActiveFlags(context: Partial<TContext>): Partial<TFlags> {
+    const result: Partial<TFlags> = {}
+
+    for (const [slug, flag] of this.config.entries()) {
+      const value = evalFlag(context, flag)
+      if (value !== undefined) {
+        result[slug as keyof TFlags] = value
+      }
+    }
+
+    return result
   }
 }

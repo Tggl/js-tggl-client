@@ -30,7 +30,6 @@ export class TgglResponse<TFlags extends TgglFlags = TgglFlags> {
     this.reporting?.reportFlag(String(slug), {
       active,
       value: this.flags[slug as keyof TFlags],
-      stack: Error().stack?.split('\n').slice(2).join('\n'),
     })
 
     return active
@@ -50,17 +49,19 @@ export class TgglResponse<TFlags extends TgglFlags = TgglFlags> {
     slug: TSlug,
     defaultValue?: TDefaultValue
   ): TgglFlagValue<TSlug, TFlags> | TDefaultValue | undefined {
+    const value =
+      this.flags[slug as keyof TFlags] === undefined
+        ? defaultValue
+        : this.flags[slug as keyof TFlags]
+
     this.reporting?.reportFlag(String(slug), {
-      active: this.flags[slug as keyof TFlags] !== undefined,
+      active: value !== undefined,
       default: defaultValue,
-      value: this.flags[slug as keyof TFlags],
-      stack: Error().stack?.split('\n').slice(2).join('\n'),
+      value,
     })
 
     // @ts-ignore
-    return this.flags[slug as keyof TFlags] === undefined
-      ? defaultValue
-      : this.flags[slug as keyof TFlags]
+    return value
   }
 
   getActiveFlags() {
