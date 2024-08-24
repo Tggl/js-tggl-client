@@ -26,7 +26,7 @@ test('Check package version', () => {
 })
 
 test('Nothing should happen', () => {
-  const reporting = new TgglReporting({ apiKey: 'API_KEY' })
+  new TgglReporting({ apiKey: 'API_KEY' })
 
   expectReporting(null)
 })

@@ -1,4 +1,3 @@
-import { evalFlag } from 'tggl-core'
 import { apiCall } from './apiCall'
 import { TgglLocalClient } from './TgglLocalClient'
 

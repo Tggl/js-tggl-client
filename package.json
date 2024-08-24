@@ -16,8 +16,9 @@
     "format": "prettier --write src/.",
     "test": "jest",
     "prepublishOnly": "npm test && rm -rf lib && npm run build",
-    "prepare": "husky install && npm run build",
-    "version": "npm run format && git add -A src",
+    "prepare": "husky install",
+    "preversion": "npm test",
+    "version": "node scripts/syncVersion.mjs && npm run format && git add -A src",
     "postversion": "git push && git push --tags"
   },
   "lint-staged": {
