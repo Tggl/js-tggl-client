@@ -221,6 +221,7 @@ export class TgglLocalClient<
       active,
       value,
     })
+    this.reporting?.reportContext(context)
 
     return active
   }
@@ -255,6 +256,7 @@ export class TgglLocalClient<
       default: defaultValue,
       value,
     })
+    this.reporting?.reportContext(context)
 
     return value
   }
@@ -268,6 +270,7 @@ export class TgglLocalClient<
         result[slug as keyof TFlags] = value
       }
     }
+    this.reporting?.reportContext(context)
 
     return result
   }
