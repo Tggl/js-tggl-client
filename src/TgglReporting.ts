@@ -1,6 +1,6 @@
 import { apiCall } from './apiCall'
 
-export const PACKAGE_VERSION = '1.15.3'
+export const PACKAGE_VERSION = '1.15.4'
 
 const constantCase = (str: string) => {
   return str
