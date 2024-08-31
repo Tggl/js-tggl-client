@@ -1,0 +1,206 @@
+[
+  {
+    "name": "NULL",
+    "response": {
+      "flagA": null
+    },
+    "flag": "flagA",
+    "value": null
+  },
+  {
+    "name": "NULL with default value",
+    "response": {
+      "flagA": null
+    },
+    "flag": "flagA",
+    "defaultValue": "foo",
+    "value": null
+  },
+  {
+    "name": "String array",
+    "response": {
+      "flagA": ["a", "b", "c"]
+    },
+    "flag": "flagA",
+    "value": ["a", "b", "c"]
+  },
+  {
+    "name": "String array with default value",
+    "response": {
+      "flagA": ["a", "b", "c"]
+    },
+    "flag": "flagA",
+    "defaultValue": "foo",
+    "value": ["a", "b", "c"]
+  },
+  {
+    "name": "Empty array",
+    "response": {
+      "flagA": []
+    },
+    "flag": "flagA",
+    "value": []
+  },
+  {
+    "name": "Empty array with default value",
+    "response": {
+      "flagA": []
+    },
+    "flag": "flagA",
+    "defaultValue": "foo",
+    "value": []
+  },
+  {
+    "name": "Object",
+    "response": {
+      "flagA": { "a": "b" }
+    },
+    "flag": "flagA",
+    "value": { "a": "b" }
+  },
+  {
+    "name": "Object with default value",
+    "response": {
+      "flagA": { "a": "b" }
+    },
+    "flag": "flagA",
+    "defaultValue": "foo",
+    "value": { "a": "b" }
+  },
+  {
+    "name": "Empty object",
+    "response": {
+      "flagA": {}
+    },
+    "flag": "flagA",
+    "value": {}
+  },
+  {
+    "name": "Empty object with default value",
+    "response": {
+      "flagA": {}
+    },
+    "flag": "flagA",
+    "defaultValue": "foo",
+    "value": {}
+  },
+  {
+    "name": "FALSE",
+    "response": {
+      "flagA": false
+    },
+    "flag": "flagA",
+    "value": false
+  },
+  {
+    "name": "FALSE with default value",
+    "response": {
+      "flagA": false
+    },
+    "flag": "flagA",
+    "defaultValue": "foo",
+    "value": false
+  },
+  {
+    "name": "TRUE",
+    "response": {
+      "flagA": true
+    },
+    "flag": "flagA",
+    "value": true
+  },
+  {
+    "name": "TRUE with default value",
+    "response": {
+      "flagA": true
+    },
+    "flag": "flagA",
+    "defaultValue": "foo",
+    "value": true
+  },
+  {
+    "name": "0",
+    "response": {
+      "flagA": 0
+    },
+    "flag": "flagA",
+    "value": 0
+  },
+  {
+    "name": "0 with default value",
+    "response": {
+      "flagA": 0
+    },
+    "flag": "flagA",
+    "defaultValue": "foo",
+    "value": 0
+  },
+  {
+    "name": "42",
+    "response": {
+      "flagA": 42
+    },
+    "flag": "flagA",
+    "value": 42
+  },
+  {
+    "name": "42 with default value",
+    "response": {
+      "flagA": 42
+    },
+    "flag": "flagA",
+    "defaultValue": "foo",
+    "value": 42
+  },
+  {
+    "name": "Empty string",
+    "response": {
+      "flagA": ""
+    },
+    "flag": "flagA",
+    "value": ""
+  },
+  {
+    "name": "Empty string with default value",
+    "response": {
+      "flagA": ""
+    },
+    "flag": "flagA",
+    "defaultValue": "foo",
+    "value": ""
+  },
+  {
+    "name": "String",
+    "response": {
+      "flagA": "foo"
+    },
+    "flag": "flagA",
+    "value": "foo"
+  },
+  {
+    "name": "String with default value",
+    "response": {
+      "flagA": "foo"
+    },
+    "flag": "flagA",
+    "defaultValue": "bar",
+    "value": "foo"
+  },
+  {
+    "name": "Unknown",
+    "response": {
+      "flagA": "foo"
+    },
+    "flag": "flagB",
+    "value": null
+  },
+  {
+    "name": "Unknown with default value",
+    "response": {
+      "flagA": "foo"
+    },
+    "flag": "flagB",
+    "defaultValue": "bar",
+    "value": "bar"
+  }
+]

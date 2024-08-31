@@ -1,0 +1,98 @@
+[
+  {
+    "name": "NULL is active",
+    "response": {
+      "flagA": null
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "FALSE is active",
+    "response": {
+      "flagA": false
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "TRUE is active",
+    "response": {
+      "flagA": true
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "0 is active",
+    "response": {
+      "flagA": 0
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "42 is active",
+    "response": {
+      "flagA": 42
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "Empty string is active",
+    "response": {
+      "flagA": ""
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "String is active",
+    "response": {
+      "flagA": "foo"
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "Array is active",
+    "response": {
+      "flagA": ["foo", "bar"]
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "Empty array is active",
+    "response": {
+      "flagA": []
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "Object is active",
+    "response": {
+      "flagA": { "foo": "bar" }
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "Empty object is active",
+    "response": {
+      "flagA": {}
+    },
+    "flag": "flagA",
+    "active": true
+  },
+  {
+    "name": "Unknown is inactive",
+    "response": {
+      "flagA": "foo"
+    },
+    "flag": "flagB",
+    "active": false
+  }
+]

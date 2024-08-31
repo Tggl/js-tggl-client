@@ -167,8 +167,8 @@ export class TgglReporting {
   ) {
     try {
       const key = `${data.active ? '1' : '0'}${JSON.stringify(
-        data.value
-      )}${JSON.stringify(data.default)}`
+        data.value ?? null
+      )}${JSON.stringify(data.default ?? null)}`
 
       this.flagsToReport[slug] ??= new Map()
 
@@ -177,8 +177,8 @@ export class TgglReporting {
         this.flagsToReport[slug]
           .set(key, {
             active: data.active,
-            value: data.value,
-            default: data.default,
+            value: data.value ?? null,
+            default: data.default ?? null,
             count: 0,
           })
           .get(key)!

@@ -1,0 +1,754 @@
+[
+  {
+    "name": "Nothing should happen",
+    "calls": [],
+    "result": null
+  },
+  {
+    "name": "Report single flag",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": null,
+                "default": null,
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report single flag with app",
+    "app": "MyApp",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "id": "MyApp",
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": null,
+                "default": null,
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report single flag with app prefix",
+    "appPrefix": "client:1.2.3",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "id": "client:1.2.3",
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": null,
+                "default": null,
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report single flag with app and app prefix",
+    "app": "MyApp",
+    "appPrefix": "client:1.2.3",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "id": "client:1.2.3/MyApp",
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": null,
+                "default": null,
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report single flag with value",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": "foo"
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": "foo",
+                "default": null,
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report single flag with value and default value",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": "foo",
+        "defaultValue": "bar"
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": "foo",
+                "default": "bar",
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report multiple flags",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true
+      },
+      {
+        "type": "flag",
+        "slug": "flagB",
+        "active": false
+      },
+      {
+        "type": "flag",
+        "slug": "flagC",
+        "active": true
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": null,
+                "default": null,
+                "count": 1
+              }
+            ],
+
+            "flagB": [
+              {
+                "active": false,
+                "value": null,
+                "default": null,
+                "count": 1
+              }
+            ],
+            "flagC": [
+              {
+                "active": true,
+                "value": null,
+                "default": null,
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report same flag, multiple times",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": false
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": false
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": null,
+                "default": null,
+                "count": 4
+              },
+              {
+                "active": false,
+                "value": null,
+                "default": null,
+                "count": 2
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report same flag, multiple times, with object value",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": { "foo":  true }
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": { "foo":  42 }
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": { "foo":  true }
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": {}
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": { "foo":  true },
+                "default": null,
+                "count": 2
+              },
+              {
+                "active": true,
+                "value": { "foo":  42 },
+                "default": null,
+                "count": 1
+              },
+              {
+                "active": true,
+                "value": {},
+                "default": null,
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report same flag, multiple times, with array value",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": [1, 2, 3]
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": ["a", "b", "c"]
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": [1, 2, 3]
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": []
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": [1, 2, 3],
+                "default": null,
+                "count": 2
+              },
+              {
+                "active": true,
+                "value": ["a", "b", "c"],
+                "default": null,
+                "count": 1
+              },
+              {
+                "active": true,
+                "value": [],
+                "default": null,
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report same flag, multiple times, with object default value",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": 63,
+        "defaultValue": { "foo":  true }
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": 63,
+        "defaultValue": { "foo":  42 }
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": 63,
+        "defaultValue": { "foo":  true }
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": 63,
+        "defaultValue": {}
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": 63,
+                "default": { "foo":  true },
+                "count": 2
+              },
+              {
+                "active": true,
+                "value": 63,
+                "default": { "foo":  42 },
+                "count": 1
+              },
+              {
+                "active": true,
+                "value": 63,
+                "default": {},
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report same flag, multiple times, with array default value",
+    "calls": [
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": 63,
+        "defaultValue": [1, 2, 3]
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": 63,
+        "defaultValue": ["a", "b", "c"]
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": 63,
+        "defaultValue": [1, 2, 3]
+      },
+      {
+        "type": "flag",
+        "slug": "flagA",
+        "active": true,
+        "value": 63,
+        "defaultValue": []
+      }
+    ],
+    "result": {
+      "clients": [
+        {
+          "flags": {
+            "flagA": [
+              {
+                "active": true,
+                "value": 63,
+                "default": [1, 2, 3],
+                "count": 2
+              },
+              {
+                "active": true,
+                "value": 63,
+                "default": ["a", "b", "c"],
+                "count": 1
+              },
+              {
+                "active": true,
+                "value": 63,
+                "default": [],
+                "count": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "Report single context",
+    "calls": [
+      {
+        "type": "context",
+        "context": {
+          "a": "foo",
+          "b": "",
+          "c": true,
+          "d": false,
+          "e": 42,
+          "f": 0,
+          "g": null,
+          "h": [],
+          "i": [1, 2, 3],
+          "j": {},
+          "k": { "foo": "bar" }
+        }
+      }
+    ],
+    "result": {
+      "receivedProperties": {
+        "a": [123456789, 123456789],
+        "b": [123456789, 123456789],
+        "c": [123456789, 123456789],
+        "d": [123456789, 123456789],
+        "e": [123456789, 123456789],
+        "f": [123456789, 123456789],
+        "g": [123456789, 123456789],
+        "h": [123456789, 123456789],
+        "i": [123456789, 123456789],
+        "j": [123456789, 123456789],
+        "k": [123456789, 123456789]
+      },
+      "receivedValues": { "a": [["foo"]] }
+    }
+  },
+  {
+    "name": "Report context camelCase label",
+    "calls": [
+      {
+        "type": "context",
+        "context": {
+          "userId": "foo",
+          "userName": "Elon Musk"
+        }
+      }
+    ],
+    "result": {
+      "receivedProperties": {
+        "userId": [123456789, 123456789],
+        "userName": [123456789, 123456789]
+      },
+      "receivedValues": {
+        "userId": [["foo", "Elon Musk"]],
+        "userName": [["Elon Musk"]]
+      }
+    }
+  },
+  {
+    "name": "Report context camelCase label upper ID",
+    "calls": [
+      {
+        "type": "context",
+        "context": {
+          "userID": "foo",
+          "userName": "Elon Musk"
+        }
+      }
+    ],
+    "result": {
+      "receivedProperties": {
+        "userID": [123456789, 123456789],
+        "userName": [123456789, 123456789]
+      },
+      "receivedValues": {
+        "userID": [["foo", "Elon Musk"]],
+        "userName": [["Elon Musk"]]
+      }
+    }
+  },
+  {
+    "name": "Report context kebab-case label",
+    "calls": [
+      {
+        "type": "context",
+        "context": {
+          "user-id": "foo",
+          "user-name": "Elon Musk"
+        }
+      }
+    ],
+    "result": {
+      "receivedProperties": {
+        "user-id": [123456789, 123456789],
+        "user-name": [123456789, 123456789]
+      },
+      "receivedValues": {
+        "user-id": [["foo", "Elon Musk"]],
+        "user-name": [["Elon Musk"]]
+      }
+    }
+  },
+  {
+    "name": "Report context snake_case label",
+    "calls": [
+      {
+        "type": "context",
+        "context": {
+          "user_id": "foo",
+          "user_name": "Elon Musk"
+        }
+      }
+    ],
+    "result": {
+      "receivedProperties": {
+        "user_id": [123456789, 123456789],
+        "user_name": [123456789, 123456789]
+      },
+      "receivedValues": {
+        "user_id": [["foo", "Elon Musk"]],
+        "user_name": [["Elon Musk"]]
+      }
+    }
+  },
+  {
+    "name": "Report context mixed case label",
+    "calls": [
+      {
+        "type": "context",
+        "context": {
+          "user_ID": "foo",
+          "userName": "Elon Musk"
+        }
+      }
+    ],
+    "result": {
+      "receivedProperties": {
+        "user_ID": [123456789, 123456789],
+        "userName": [123456789, 123456789]
+      },
+      "receivedValues": {
+        "user_ID": [["foo", "Elon Musk"]],
+        "userName": [["Elon Musk"]]
+      }
+    }
+  },
+  {
+    "name": "Report multiple contexts",
+    "calls": [
+      {
+        "type": "context",
+        "context": {
+          "foo": 42
+        }
+      },
+      {
+        "type": "context",
+        "context": {
+          "foo": "bar"
+        }
+      },
+      {
+        "type": "context",
+        "context": {
+          "foo": "bar"
+        }
+      },
+      {
+        "type": "context",
+        "context": {
+          "foo": "baz"
+        }
+      }
+    ],
+    "result": {
+      "receivedProperties": {
+        "foo": [123456789, 123456789]
+      },
+      "receivedValues": {
+        "foo": [["bar"], ["baz"]]
+      }
+    }
+  },
+  {
+    "name": "Report multiple contexts with labels",
+    "calls": [
+      {
+        "type": "context",
+        "context": {
+          "userId": "abc",
+          "userName": "Elon Musk"
+        }
+      },
+      {
+        "type": "context",
+        "context": {
+          "userId": "def",
+          "userName": "Jeff Bezos"
+        }
+      },
+      {
+        "type": "context",
+        "context": {
+          "userId": 42,
+          "userName": "Buzz Aldrin"
+        }
+      },
+      {
+        "type": "context",
+        "context": {
+          "userId": "abc",
+          "userName": "Alan Turing"
+        }
+      }
+    ],
+    "result": {
+      "receivedProperties": {
+        "userId": [123456789, 123456789],
+        "userName": [123456789, 123456789]
+      },
+      "receivedValues": {
+        "userId": [
+          ["abc", "Alan Turing"],
+          ["def", "Jeff Bezos"]
+        ],
+        "userName": [
+          ["Elon Musk"],
+          ["Jeff Bezos"],
+          ["Buzz Aldrin"],
+          ["Alan Turing"]
+        ]
+      }
+    }
+  }
+]

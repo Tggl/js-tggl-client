@@ -3,33 +3,47 @@ jest.mock('./TgglReporting')
 
 import { apiCall } from './apiCall'
 import { TgglClient } from './TgglClient'
+import getTests from '../testData/get.json'
+import isActiveTests from '../testData/isActive.json'
 
 beforeAll(() => {
   console.error = jest.fn()
 })
 
 describe('stateful client', () => {
+  for (const { name, value, response, defaultValue, flag } of getTests) {
+    test('get ' + name, async () => {
+      const client = new TgglClient<any>('API_KEY', {
+        initialActiveFlags: response,
+      })
+
+      if (defaultValue !== undefined) {
+        expect(client.get(flag, defaultValue) ?? null).toEqual(value)
+      } else {
+        expect(client.get(flag) ?? null).toEqual(value)
+      }
+    })
+  }
+
+  for (const { name, flag, response, active } of isActiveTests) {
+    test('isActive ' + name, async () => {
+      const client = new TgglClient<any>('API_KEY', {
+        initialActiveFlags: response,
+      })
+
+      expect(client.isActive(flag)).toBe(active)
+    })
+  }
+
   test('Success', async () => {
     // @ts-ignore
-    apiCall.mockResolvedValue([{ flagA: null, flagB: 'foo', flagC: false }])
+    apiCall.mockResolvedValue([{ flagA: 'foo' }])
 
     const client = new TgglClient('API_KEY')
     await expect(client.setContext({ foo: 'bar' })).resolves.toBeUndefined()
 
     expect(client.isActive('flagA')).toBe(true)
-    expect(client.isActive('flagB')).toBe(true)
-    expect(client.isActive('flagC')).toBe(true)
-    expect(client.isActive('flagD')).toBe(false)
-
-    expect(client.get('flagA')).toBe(null)
-    expect(client.get('flagB')).toBe('foo')
-    expect(client.get('flagC')).toBe(false)
-    expect(client.get('flagD')).toBe(undefined)
-
-    expect(client.get('flagA', 'bar')).toBe(null)
-    expect(client.get('flagB', 'bar')).toBe('foo')
-    expect(client.get('flagC', 'bar')).toBe(false)
-    expect(client.get('flagD', 'bar')).toBe('bar')
+    expect(client.get('flagA')).toBe('foo')
 
     expect(apiCall).toHaveBeenCalledTimes(1)
     expect(apiCall).toHaveBeenCalledWith({
