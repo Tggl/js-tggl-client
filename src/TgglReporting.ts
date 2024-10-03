@@ -12,7 +12,7 @@ const constantCase = (str: string) => {
 export class TgglReporting {
   private app: string | null
   public appPrefix: string | null
-  private apiKey: string
+  private apiKey: string | null
   private url: string
   private disabled = false
   private flagsToReport: Record<
@@ -41,12 +41,12 @@ export class TgglReporting {
   }: {
     app?: string
     appPrefix?: string
-    apiKey: string
+    apiKey?: string | null
     url?: string
   }) {
     this.app = app ?? null
     this.appPrefix = appPrefix ?? null
-    this.apiKey = apiKey
+    this.apiKey = apiKey ?? null
     this.url = url ?? 'https://api.tggl.io/report'
 
     this.sendReport()

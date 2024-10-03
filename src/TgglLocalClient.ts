@@ -41,7 +41,7 @@ export class TgglLocalClient<
     this.config = options.initialConfig ?? new Map()
     this.log = options.log ?? true
     this.reporting =
-      options.reporting === false || !apiKey
+      options.reporting === false
         ? null
         : new TgglReporting({
             apiKey,

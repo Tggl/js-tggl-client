@@ -41,7 +41,7 @@ export class TgglClient<
   ) {
     super(options.initialActiveFlags, {
       reporting:
-        options.reporting === false || !apiKey
+        options.reporting === false
           ? null
           : new TgglReporting({
               apiKey,
