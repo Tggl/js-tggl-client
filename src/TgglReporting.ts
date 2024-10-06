@@ -1,4 +1,5 @@
 import { apiCall } from './apiCall'
+import { TgglReportingOptions } from './types'
 
 export const PACKAGE_VERSION = '1.15.6'
 
@@ -15,16 +16,20 @@ export class TgglReporting {
   private apiKey: string | null
   private url: string
   private disabled = false
+  private reportInterval
   private flagsToReport: Record<
     string,
-    Map<
+    Record<
       string,
-      {
-        active: boolean
-        value?: any
-        default?: any
-        count: number
-      }
+      Map<
+        string,
+        {
+          active: boolean
+          value?: any
+          default?: any
+          count: number
+        }
+      >
     >
   > = {}
   private receivedPropertiesToReport: Record<string, [number, number]> = {}
@@ -38,16 +43,21 @@ export class TgglReporting {
     appPrefix,
     apiKey,
     url,
-  }: {
-    app?: string
-    appPrefix?: string
-    apiKey?: string | null
-    url?: string
-  }) {
+    baseUrl,
+    reportInterval,
+  }: TgglReportingOptions) {
     this.app = app ?? null
     this.appPrefix = appPrefix ?? null
     this.apiKey = apiKey ?? null
-    this.url = url ?? 'https://api.tggl.io/report'
+    this.reportInterval = reportInterval ?? 2000
+
+    if (url) {
+      this.url = url
+    } else if (baseUrl) {
+      this.url = baseUrl + '/report'
+    } else {
+      this.url = 'https://api.tggl.io/report'
+    }
 
     this.sendReport()
   }
@@ -64,13 +74,12 @@ export class TgglReporting {
         const flagsToReport = { ...this.flagsToReport }
         this.flagsToReport = {}
 
-        payload.clients = [
-          {
-            id:
-              `${this.appPrefix ?? ''}${this.app && this.appPrefix ? '/' : ''}${
-                this.app ?? ''
-              }` || undefined,
-            flags: Object.entries(flagsToReport).reduce(
+        payload.clients = []
+
+        for (const [clientId, flags] of Object.entries(flagsToReport)) {
+          payload.clients.push({
+            id: clientId || undefined,
+            flags: Object.entries(flags).reduce(
               (acc, [key, value]) => {
                 acc[key] = [...value.values()]
                 return acc
@@ -85,8 +94,8 @@ export class TgglReporting {
                 }[]
               >
             ),
-          },
-        ]
+          })
+        }
       }
 
       if (Object.keys(this.receivedPropertiesToReport).length) {
@@ -153,7 +162,7 @@ export class TgglReporting {
     if (!this.disabled) {
       setTimeout(() => {
         this.sendReport()
-      }, 2000)
+      }, this.reportInterval)
     }
   }
 
@@ -166,24 +175,13 @@ export class TgglReporting {
     }
   ) {
     try {
-      const key = `${data.active ? '1' : '0'}${JSON.stringify(
-        data.value ?? null
-      )}${JSON.stringify(data.default ?? null)}`
-
-      this.flagsToReport[slug] ??= new Map()
-
-      const value =
-        this.flagsToReport[slug].get(key) ??
-        this.flagsToReport[slug]
-          .set(key, {
-            active: data.active,
-            value: data.value ?? null,
-            default: data.default ?? null,
-            count: 0,
-          })
-          .get(key)!
-
-      value.count++
+      this.incrementFlag(
+        data,
+        `${this.appPrefix ?? ''}${this.app && this.appPrefix ? '/' : ''}${
+          this.app ?? ''
+        }`,
+        slug
+      )
     } catch (error) {
       // Do nothing
     }
@@ -221,5 +219,96 @@ export class TgglReporting {
     } catch (error) {
       // Do nothing
     }
+  }
+
+  mergeReport(report: {
+    receivedProperties?: Record<string, [number, number]>
+    receivedValues?: Record<string, Array<[string] | [string, string]>>
+    clients?: Array<{
+      id?: string
+      flags: Record<
+        string,
+        Array<{
+          active: boolean
+          value?: any
+          default?: any
+          count?: number
+        }>
+      >
+    }>
+  }) {
+    if (!report || typeof report !== 'object' || Array.isArray(report)) {
+      return
+    }
+
+    try {
+      if (report.receivedProperties) {
+        for (const [key, [min, max]] of Object.entries(
+          report.receivedProperties
+        )) {
+          if (this.receivedPropertiesToReport[key]) {
+            this.receivedPropertiesToReport[key][0] = Math.min(
+              this.receivedPropertiesToReport[key][0],
+              min
+            )
+            this.receivedPropertiesToReport[key][1] = Math.max(
+              this.receivedPropertiesToReport[key][1],
+              max
+            )
+          } else {
+            this.receivedPropertiesToReport[key] = [min, max]
+          }
+        }
+      }
+
+      if (report.receivedValues) {
+        for (const [key, values] of Object.entries(report.receivedValues)) {
+          for (const [value, label] of values) {
+            this.receivedValuesToReport[key] ??= {}
+            this.receivedValuesToReport[key][value] =
+              label ?? this.receivedValuesToReport[key][value] ?? null
+          }
+        }
+      }
+
+      if (report.clients) {
+        for (const client of report.clients) {
+          for (const [slug, values] of Object.entries(client.flags)) {
+            for (const data of values) {
+              this.incrementFlag(data, client.id ?? '', slug)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      // Do nothing
+    }
+  }
+
+  private incrementFlag(
+    data: { active: boolean; value?: any; default?: any; count?: number },
+    clientId: string,
+    slug: string
+  ) {
+    this.flagsToReport[clientId] ??= {}
+
+    const key = `${data.active ? '1' : '0'}${JSON.stringify(
+      data.value ?? null
+    )}${JSON.stringify(data.default ?? null)}`
+
+    this.flagsToReport[clientId][slug] ??= new Map()
+
+    const value =
+      this.flagsToReport[clientId][slug].get(key) ??
+      this.flagsToReport[clientId][slug]
+        .set(key, {
+          active: data.active,
+          value: data.value ?? null,
+          default: data.default ?? null,
+          count: 0,
+        })
+        .get(key)!
+
+    value.count += data.count ?? 1
   }
 }

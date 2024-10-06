@@ -1,4 +1,11 @@
-import { TgglContext, TgglFlags, TgglFlagSlug, TgglFlagValue } from './types'
+import {
+  TgglConfig,
+  TgglContext,
+  TgglFlags,
+  TgglFlagSlug,
+  TgglFlagValue,
+  TgglLocalClientOptions,
+} from './types'
 import { evalFlag, Flag } from 'tggl-core'
 import { assertValidContext } from './validation'
 import { apiCall } from './apiCall'
@@ -9,7 +16,7 @@ export class TgglLocalClient<
   TContext extends TgglContext = TgglContext
 > {
   private url: string
-  private config: Map<TgglFlagSlug<TFlags>, Flag>
+  private config: TgglConfig<TFlags>
   private pollingInterval: number = 0
   private timeoutID?: ReturnType<typeof setTimeout>
   private fetchID = 0
@@ -20,7 +27,7 @@ export class TgglLocalClient<
   private fetchPromise?: Promise<number>
   private onConfigChangeCallbacks = new Map<
     number,
-    (config: Map<TgglFlagSlug<TFlags>, Flag>) => void
+    (config: TgglConfig<TFlags>) => void
   >()
   private onFetchSuccessfulCallbacks = new Map<number, () => void>()
   private onFetchFailCallbacks = new Map<number, (error: Error) => void>()
@@ -29,37 +36,40 @@ export class TgglLocalClient<
 
   constructor(
     private apiKey?: string | null,
-    options: {
-      url?: string
-      initialConfig?: Map<TgglFlagSlug<TFlags>, Flag>
-      pollingInterval?: number
-      log?: boolean
-      reporting?: boolean | { app?: string; url?: string }
-    } = {}
+    options: TgglLocalClientOptions<TFlags> = {}
   ) {
-    this.url = options.url ?? 'https://api.tggl.io/config'
+    if (options.url) {
+      this.url = options.url
+    } else if (options.baseUrl) {
+      this.url = options.baseUrl + '/config'
+    } else {
+      this.url = 'https://api.tggl.io/config'
+    }
     this.config = options.initialConfig ?? new Map()
     this.log = options.log ?? true
+
+    const reportingOptions =
+      options.reporting && typeof options.reporting === 'object'
+        ? options.reporting
+        : {}
+
     this.reporting =
       options.reporting === false
         ? null
         : new TgglReporting({
-            apiKey,
-            app:
-              typeof options.reporting === 'object'
-                ? options.reporting.app
-                : undefined,
-            appPrefix: `js-client:${PACKAGE_VERSION}/TgglLocalClient`,
-            url:
-              typeof options.reporting === 'object'
-                ? options.reporting.url
-                : undefined,
+            apiKey: reportingOptions.apiKey ?? apiKey,
+            app: reportingOptions.app,
+            appPrefix:
+              reportingOptions.appPrefix ??
+              `js-client:${PACKAGE_VERSION}/TgglLocalClient`,
+            url: reportingOptions.url,
+            baseUrl: reportingOptions.baseUrl ?? options.baseUrl,
           })
 
     this.startPolling(options.pollingInterval ?? 0)
   }
 
-  onConfigChange(callback: (config: Map<TgglFlagSlug<TFlags>, Flag>) => void) {
+  onConfigChange(callback: (config: TgglConfig<TFlags>) => void) {
     const id = Math.random()
     this.onConfigChangeCallbacks.set(id, callback)
 
@@ -185,7 +195,7 @@ export class TgglLocalClient<
     return this.config
   }
 
-  setConfig(config: Map<TgglFlagSlug<TFlags>, Flag>) {
+  setConfig(config: TgglConfig<TFlags>) {
     this.config = config
   }
 

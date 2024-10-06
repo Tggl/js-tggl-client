@@ -1,4 +1,4 @@
-import { TgglContext, TgglFlags } from './types'
+import { TgglClientOptions, TgglContext, TgglFlags } from './types'
 import { TgglResponse } from './TgglResponse'
 import DataLoader from 'dataloader'
 import { assertValidContext } from './validation'
@@ -31,33 +31,36 @@ export class TgglClient<
 
   constructor(
     private apiKey?: string | null,
-    options: {
-      url?: string
-      initialActiveFlags?: Partial<TFlags>
-      pollingInterval?: number
-      log?: boolean
-      reporting?: boolean | { app?: string; url?: string }
-    } = {}
+    options: TgglClientOptions<TFlags> = {}
   ) {
+    const reportingOptions =
+      options.reporting && typeof options.reporting === 'object'
+        ? options.reporting
+        : {}
+
     super(options.initialActiveFlags, {
       reporting:
         options.reporting === false
           ? null
           : new TgglReporting({
-              apiKey,
-              app:
-                typeof options.reporting === 'object'
-                  ? options.reporting.app
-                  : undefined,
-              appPrefix: `js-client:${PACKAGE_VERSION}/TgglClient`,
-              url:
-                typeof options.reporting === 'object'
-                  ? options.reporting.url
-                  : undefined,
+              apiKey: reportingOptions.apiKey ?? apiKey,
+              app: reportingOptions.app,
+              appPrefix:
+                reportingOptions.appPrefix ??
+                `js-client:${PACKAGE_VERSION}/TgglClient`,
+              url: reportingOptions.url,
+              baseUrl: reportingOptions.baseUrl ?? options.baseUrl,
             }),
     })
 
-    this.url = options.url ?? 'https://api.tggl.io/flags'
+    if (options.url) {
+      this.url = options.url
+    } else if (options.baseUrl) {
+      this.url = options.baseUrl + '/flags'
+    } else {
+      this.url = 'https://api.tggl.io/flags'
+    }
+
     this.log = options.log ?? true
 
     this.loader = new DataLoader<Partial<TContext>, Partial<TFlags>>(
