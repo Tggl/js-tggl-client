@@ -50,6 +50,7 @@ export class TgglClient<
                 `js-client:${PACKAGE_VERSION}/TgglClient`,
               url: reportingOptions.url,
               baseUrl: reportingOptions.baseUrl ?? options.baseUrl,
+              reportInterval: reportingOptions.reportInterval,
             }),
     })
 

@@ -64,6 +64,7 @@ export class TgglLocalClient<
               `js-client:${PACKAGE_VERSION}/TgglLocalClient`,
             url: reportingOptions.url,
             baseUrl: reportingOptions.baseUrl ?? options.baseUrl,
+            reportInterval: reportingOptions.reportInterval,
           })
 
     this.startPolling(options.pollingInterval ?? 0)
