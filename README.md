@@ -16,6 +16,8 @@
   •
   <a href="https://tggl.io/developers/sdks/node">📚 Documentation</a>
   •
+  <a href="https://www.npmjs.com/package/tggl-client">📦 NPM</a>
+  •
   <a href="https://www.youtube.com/@Tggl-io">🎥 Videos</a>
 </p>
 
