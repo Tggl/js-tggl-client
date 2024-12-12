@@ -1,7 +1,7 @@
 import { apiCall } from './apiCall'
 import { TgglReportingOptions } from './types'
 
-export const PACKAGE_VERSION = '1.17.2'
+export const PACKAGE_VERSION = '2.0.0'
 
 const constantCase = (str: string) => {
   return str
