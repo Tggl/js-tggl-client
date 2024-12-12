@@ -222,25 +222,6 @@ export class TgglLocalClient<
     }
   }
 
-  isActive(context: Partial<TContext>, slug: TgglFlagSlug<TFlags>) {
-    assertValidContext(context)
-    const flag = this.config.get(slug)
-    const value = flag ? evalFlag(context, flag) : undefined
-    const active = value !== undefined
-
-    this.reporting?.reportFlag(String(slug), {
-      active,
-      value,
-    })
-    this.reporting?.reportContext(context)
-
-    return active
-  }
-
-  get<TSlug extends TgglFlagSlug<TFlags>>(
-    context: Partial<TContext>,
-    slug: TSlug
-  ): TgglFlagValue<TSlug, TFlags> | undefined
   get<
     TSlug extends TgglFlagSlug<TFlags>,
     TDefaultValue = TgglFlagValue<TSlug, TFlags>
@@ -248,15 +229,7 @@ export class TgglLocalClient<
     context: Partial<TContext>,
     slug: TSlug,
     defaultValue: TDefaultValue
-  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue
-  get<
-    TSlug extends TgglFlagSlug<TFlags>,
-    TDefaultValue = TgglFlagValue<TSlug, TFlags>
-  >(
-    context: Partial<TContext>,
-    slug: TSlug,
-    defaultValue?: TDefaultValue
-  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue | undefined {
+  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue {
     assertValidContext(context)
     const flag = this.config.get(slug)
     const rawValue = flag ? evalFlag(context, flag) : undefined

@@ -24,31 +24,13 @@ export class TgglResponse<TFlags extends TgglFlags = TgglFlags> {
     return reporting
   }
 
-  isActive(slug: TgglFlagSlug<TFlags>): boolean {
-    const active = this.flags[slug as keyof TFlags] !== undefined
-
-    this.reporting?.reportFlag(String(slug), {
-      active,
-      value: this.flags[slug as keyof TFlags],
-    })
-
-    return active
-  }
-
-  get<TSlug extends TgglFlagSlug<TFlags>>(
-    slug: TSlug
-  ): TgglFlagValue<TSlug, TFlags> | undefined
   get<
     TSlug extends TgglFlagSlug<TFlags>,
     TDefaultValue = TgglFlagValue<TSlug, TFlags>
   >(
     slug: TSlug,
     defaultValue: TDefaultValue
-  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue
-  get<TSlug extends keyof TFlags, TDefaultValue = TgglFlagValue<TSlug, TFlags>>(
-    slug: TSlug,
-    defaultValue?: TDefaultValue
-  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue | undefined {
+  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue {
     const value =
       this.flags[slug as keyof TFlags] === undefined
         ? defaultValue

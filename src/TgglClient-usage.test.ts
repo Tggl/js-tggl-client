@@ -4,7 +4,6 @@ jest.mock('./TgglReporting')
 import { apiCall } from './apiCall'
 import { TgglClient } from './TgglClient'
 import getTests from '../testData/get.json'
-import isActiveTests from '../testData/isActive.json'
 
 beforeAll(() => {
   console.error = jest.fn()
@@ -17,21 +16,7 @@ describe('stateful client', () => {
         initialActiveFlags: response,
       })
 
-      if (defaultValue !== undefined) {
-        expect(client.get(flag, defaultValue) ?? null).toEqual(value)
-      } else {
-        expect(client.get(flag) ?? null).toEqual(value)
-      }
-    })
-  }
-
-  for (const { name, flag, response, active } of isActiveTests) {
-    test('isActive ' + name, async () => {
-      const client = new TgglClient<any>('API_KEY', {
-        initialActiveFlags: response,
-      })
-
-      expect(client.isActive(flag)).toBe(active)
+      expect(client.get(flag, defaultValue) ?? null).toEqual(value)
     })
   }
 
@@ -42,8 +27,7 @@ describe('stateful client', () => {
     const client = new TgglClient('API_KEY')
     await expect(client.setContext({ foo: 'bar' })).resolves.toBeUndefined()
 
-    expect(client.isActive('flagA')).toBe(true)
-    expect(client.get('flagA')).toBe('foo')
+    expect(client.get('flagA', 3.14)).toBe('foo')
 
     expect(apiCall).toHaveBeenCalledTimes(1)
     expect(apiCall).toHaveBeenCalledWith({
@@ -83,7 +67,7 @@ describe('stateful client', () => {
     apiCall.mockRejectedValue({ error: 'Invalid API key' })
     await expect(client.setContext({ foo: 'baz' })).resolves.toBeUndefined()
 
-    expect(client.isActive('flagA')).toBe(true)
+    expect(client.get('flagA', true)).toBe(null)
     expect(console.error).toHaveBeenCalledTimes(1)
     expect(console.error).toHaveBeenCalledWith(
       new Error('Invalid response from Tggl: Invalid API key')
@@ -98,7 +82,7 @@ describe('stateful client', () => {
     await expect(client.setContext({ foo: 'bar' })).resolves.toBeUndefined()
     await expect(client.setContext([{ foo: 'baz' }])).resolves.toBeUndefined()
 
-    expect(client.isActive('flagA')).toBe(true)
+    expect(client.get('flagB', false)).toBe('foo')
     expect(console.error).toHaveBeenCalledTimes(1)
     expect(console.error).toHaveBeenCalledWith(
       new Error('Invalid Tggl context, context cannot be an array')
@@ -114,16 +98,6 @@ describe('stateless client', () => {
 
       const client = new TgglClient('API_KEY')
       const response = await client.evalContext({ foo: 'bar' })
-
-      expect(response.isActive('flagA')).toBe(true)
-      expect(response.isActive('flagB')).toBe(true)
-      expect(response.isActive('flagC')).toBe(true)
-      expect(response.isActive('flagD')).toBe(false)
-
-      expect(response.get('flagA')).toBe(null)
-      expect(response.get('flagB')).toBe('foo')
-      expect(response.get('flagC')).toBe(false)
-      expect(response.get('flagD')).toBe(undefined)
 
       expect(response.get('flagA', 'bar')).toBe(null)
       expect(response.get('flagB', 'bar')).toBe('foo')
@@ -169,7 +143,7 @@ describe('stateless client', () => {
       const client = new TgglClient('API_KEY')
       const response = await client.evalContext({ foo: 'bar' })
 
-      expect(response.isActive('flagA')).toBe(false)
+      expect(response.get('flagA', false)).toBe(false)
       expect(console.error).toHaveBeenCalledTimes(1)
       expect(console.error).toHaveBeenCalledWith(
         new Error('Invalid response from Tggl: Invalid API key')
@@ -181,7 +155,7 @@ describe('stateless client', () => {
       // @ts-ignore
       const response = await client.evalContext(null)
 
-      expect(response.isActive('flagA')).toBe(false)
+      expect(response.get('flagA', 'foo')).toBe('foo')
       expect(console.error).toHaveBeenCalledTimes(1)
       expect(console.error).toHaveBeenCalledWith(
         new Error('Invalid Tggl context, context is missing')
