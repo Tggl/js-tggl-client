@@ -34,7 +34,6 @@ for (const { name, app, appPrefix, calls, result } of reportingTests) {
     for (const call of calls as any[]) {
       if (call.type === 'flag') {
         reporting.reportFlag(call.slug, {
-          active: call.active,
           value: call.value,
           default: call.defaultValue,
         })

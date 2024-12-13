@@ -236,7 +236,6 @@ export class TgglLocalClient<
     const value = rawValue === undefined ? defaultValue : rawValue
 
     this.reporting?.reportFlag(String(slug), {
-      active: value !== undefined,
       default: defaultValue,
       value,
     })

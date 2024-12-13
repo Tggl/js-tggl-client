@@ -24,7 +24,6 @@ export class TgglReporting {
       Map<
         string,
         {
-          active: boolean
           value?: any
           default?: any
           count: number
@@ -87,7 +86,6 @@ export class TgglReporting {
               {} as Record<
                 string,
                 {
-                  active: boolean
                   value?: any
                   default?: any
                   count: number
@@ -169,7 +167,6 @@ export class TgglReporting {
   reportFlag(
     slug: string,
     data: {
-      active: boolean
       value?: any
       default?: any
     }
@@ -229,7 +226,6 @@ export class TgglReporting {
       flags: Record<
         string,
         Array<{
-          active: boolean
           value?: any
           default?: any
           count?: number
@@ -286,15 +282,15 @@ export class TgglReporting {
   }
 
   private incrementFlag(
-    data: { active: boolean; value?: any; default?: any; count?: number },
+    data: { value?: any; default?: any; count?: number },
     clientId: string,
     slug: string
   ) {
     this.flagsToReport[clientId] ??= {}
 
-    const key = `${data.active ? '1' : '0'}${JSON.stringify(
-      data.value ?? null
-    )}${JSON.stringify(data.default ?? null)}`
+    const key = `${JSON.stringify(data.value ?? null)}${JSON.stringify(
+      data.default ?? null
+    )}`
 
     this.flagsToReport[clientId][slug] ??= new Map()
 
@@ -302,7 +298,6 @@ export class TgglReporting {
       this.flagsToReport[clientId][slug].get(key) ??
       this.flagsToReport[clientId][slug]
         .set(key, {
-          active: data.active,
           value: data.value ?? null,
           default: data.default ?? null,
           count: 0,

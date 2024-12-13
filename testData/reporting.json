@@ -9,8 +9,7 @@
     "calls": [
       {
         "type": "flag",
-        "slug": "flagA",
-        "active": true
+        "slug": "flagA"
       }
     ],
     "result": {
@@ -19,7 +18,6 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": null,
                 "default": null,
                 "count": 1
@@ -36,8 +34,7 @@
     "calls": [
       {
         "type": "flag",
-        "slug": "flagA",
-        "active": true
+        "slug": "flagA"
       }
     ],
     "result": {
@@ -47,7 +44,6 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": null,
                 "default": null,
                 "count": 1
@@ -64,8 +60,7 @@
     "calls": [
       {
         "type": "flag",
-        "slug": "flagA",
-        "active": true
+        "slug": "flagA"
       }
     ],
     "result": {
@@ -75,7 +70,6 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": null,
                 "default": null,
                 "count": 1
@@ -93,8 +87,7 @@
     "calls": [
       {
         "type": "flag",
-        "slug": "flagA",
-        "active": true
+        "slug": "flagA"
       }
     ],
     "result": {
@@ -104,7 +97,6 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": null,
                 "default": null,
                 "count": 1
@@ -121,7 +113,6 @@
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": "foo"
       }
     ],
@@ -131,7 +122,6 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": "foo",
                 "default": null,
                 "count": 1
@@ -148,7 +138,6 @@
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": "foo",
         "defaultValue": "bar"
       }
@@ -159,7 +148,6 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": "foo",
                 "default": "bar",
                 "count": 1
@@ -175,18 +163,15 @@
     "calls": [
       {
         "type": "flag",
-        "slug": "flagA",
-        "active": true
+        "slug": "flagA"
       },
       {
         "type": "flag",
-        "slug": "flagB",
-        "active": false
+        "slug": "flagB"
       },
       {
         "type": "flag",
-        "slug": "flagC",
-        "active": true
+        "slug": "flagC"
       }
     ],
     "result": {
@@ -195,7 +180,6 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": null,
                 "default": null,
                 "count": 1
@@ -204,7 +188,6 @@
 
             "flagB": [
               {
-                "active": false,
                 "value": null,
                 "default": null,
                 "count": 1
@@ -212,7 +195,6 @@
             ],
             "flagC": [
               {
-                "active": true,
                 "value": null,
                 "default": null,
                 "count": 1
@@ -229,32 +211,32 @@
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true
+        "value": true
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": false
+        "value": false
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": false
+        "value": false
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true
+        "value": true
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true
+        "value": true
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true
+        "value": true
       }
     ],
     "result": {
@@ -263,14 +245,12 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
-                "value": null,
+                "value": true,
                 "default": null,
                 "count": 4
               },
               {
-                "active": false,
-                "value": null,
+                "value": false,
                 "default": null,
                 "count": 2
               }
@@ -286,25 +266,21 @@
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": { "foo":  true }
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": { "foo":  42 }
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": { "foo":  true }
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": {}
       }
     ],
@@ -314,19 +290,16 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": { "foo":  true },
                 "default": null,
                 "count": 2
               },
               {
-                "active": true,
                 "value": { "foo":  42 },
                 "default": null,
                 "count": 1
               },
               {
-                "active": true,
                 "value": {},
                 "default": null,
                 "count": 1
@@ -343,25 +316,21 @@
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": [1, 2, 3]
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": ["a", "b", "c"]
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": [1, 2, 3]
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": []
       }
     ],
@@ -371,19 +340,16 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": [1, 2, 3],
                 "default": null,
                 "count": 2
               },
               {
-                "active": true,
                 "value": ["a", "b", "c"],
                 "default": null,
                 "count": 1
               },
               {
-                "active": true,
                 "value": [],
                 "default": null,
                 "count": 1
@@ -400,28 +366,24 @@
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": 63,
         "defaultValue": { "foo":  true }
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": 63,
         "defaultValue": { "foo":  42 }
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": 63,
         "defaultValue": { "foo":  true }
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": 63,
         "defaultValue": {}
       }
@@ -432,19 +394,16 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": 63,
                 "default": { "foo":  true },
                 "count": 2
               },
               {
-                "active": true,
                 "value": 63,
                 "default": { "foo":  42 },
                 "count": 1
               },
               {
-                "active": true,
                 "value": 63,
                 "default": {},
                 "count": 1
@@ -461,28 +420,24 @@
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": 63,
         "defaultValue": [1, 2, 3]
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": 63,
         "defaultValue": ["a", "b", "c"]
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": 63,
         "defaultValue": [1, 2, 3]
       },
       {
         "type": "flag",
         "slug": "flagA",
-        "active": true,
         "value": 63,
         "defaultValue": []
       }
@@ -493,19 +448,16 @@
           "flags": {
             "flagA": [
               {
-                "active": true,
                 "value": 63,
                 "default": [1, 2, 3],
                 "count": 2
               },
               {
-                "active": true,
                 "value": 63,
                 "default": ["a", "b", "c"],
                 "count": 1
               },
               {
-                "active": true,
                 "value": 63,
                 "default": [],
                 "count": 1

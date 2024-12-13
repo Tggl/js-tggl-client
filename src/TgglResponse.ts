@@ -37,7 +37,6 @@ export class TgglResponse<TFlags extends TgglFlags = TgglFlags> {
         : this.flags[slug as keyof TFlags]
 
     this.reporting?.reportFlag(String(slug), {
-      active: value !== undefined,
       default: defaultValue,
       value,
     })
