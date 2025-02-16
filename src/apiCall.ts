@@ -16,6 +16,7 @@ export const apiCall = ({
 
   return new Promise((resolve, reject) => {
     const postData = body ? JSON.stringify(body) : ''
+    let timer: number | undefined = undefined
 
     const req = httpModule.request(
       url,
@@ -45,6 +46,8 @@ export const apiCall = ({
         res.on('data', (chunk) => (data += chunk))
 
         res.on('end', () => {
+          clearTimeout(timer)
+
           try {
             if (res.statusCode !== 200) {
               reject(JSON.parse(data))
@@ -52,6 +55,9 @@ export const apiCall = ({
               resolve(JSON.parse(data))
             }
           } catch (error) {
+            if (error instanceof SyntaxError) {
+              reject(data)
+            }
             reject(error)
           }
         })
@@ -63,5 +69,11 @@ export const apiCall = ({
       req.write(postData)
     }
     req.end()
+
+    // @ts-ignore
+    timer = setTimeout(() => {
+      req.destroy()
+      reject({ error: 'Request timed out' })
+    }, 10_000)
   })
 }

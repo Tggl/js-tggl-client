@@ -9,8 +9,12 @@ export const apiCall = ({
   apiKey?: string | null
   body?: any
 }): Promise<unknown> => {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort('Request timed out'), 10_000)
+
   return fetch(url, {
     method,
+    signal: controller.signal,
     body: body ? JSON.stringify(body) : undefined,
     headers:
       body && apiKey
@@ -28,6 +32,8 @@ export const apiCall = ({
           }
         : {},
   }).then(async (r) => {
+    clearTimeout(timer)
+
     if (r.ok) {
       return r.json()
     }
