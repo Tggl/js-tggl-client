@@ -176,8 +176,10 @@ export class TgglLocalClient<
       }
 
       throw new Error(
-        // @ts-ignore
-        `Invalid response from Tggl: ${error.error ?? error.message ?? error}`
+        `Invalid response from Tggl: ${
+          // @ts-ignore
+          error.error ?? error.message ?? JSON.stringify(error)
+        }`
       )
     } finally {
       // If this is the last fetch that was started, we can update the config

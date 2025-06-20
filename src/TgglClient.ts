@@ -77,7 +77,7 @@ export class TgglClient<
           throw new Error(
             `Invalid response from Tggl: ${
               // @ts-ignore
-              error.error ?? error.message ?? error
+              error.error ?? error.message ?? JSON.stringify(error)
             }`
           )
         }
