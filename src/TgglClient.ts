@@ -75,8 +75,10 @@ export class TgglClient<
           })) as Promise<any>
         } catch (error) {
           throw new Error(
-            // @ts-ignore
-            `Invalid response from Tggl: ${error.error ?? error.message}`
+            `Invalid response from Tggl: ${
+              // @ts-ignore
+              error.error ?? error.message ?? error
+            }`
           )
         }
       },
