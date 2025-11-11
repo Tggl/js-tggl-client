@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/actions/workflow/status/Tggl/js-tggl-client/tests.yml" alt="GitHub Workflow Status (with event)" />
+  <img src="https://img.shields.io/github/actions/workflow/status/Tggl/js-tggl-client/test.yml" alt="GitHub Workflow Status (with event)" />
   <img src="https://img.shields.io/coverallsCoverage/github/Tggl/js-tggl-client" alt="Coveralls branch" />
   <img src="https://img.shields.io/npm/v/tggl-client" alt="npm" />
 </p>
