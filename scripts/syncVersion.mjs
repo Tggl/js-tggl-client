@@ -1,4 +1,4 @@
-import fs from 'fs/promises.js';
+import fs from 'fs/promises';
 
 fs.readFile('src/version.ts', 'utf-8').then(async (code) => {
   const packageJson = await fs.readFile('package.json', 'utf-8');
