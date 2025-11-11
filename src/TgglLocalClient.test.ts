@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { TgglLocalClient } from './TgglLocalClient';
+import { TgglLocalClient } from './TgglLocalClient.js';
 import { after, before, beforeEach, describe, mock, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fetchMock from 'fetch-mock';
-import { PACKAGE_VERSION } from './version';
-import { TgglReporting } from './TgglReporting';
-import { TgglConfig, TgglStorage } from './types';
-import { TgglLocalClientStateSerializer } from './serializers';
+import { PACKAGE_VERSION } from './version.js';
+import { TgglReporting } from './TgglReporting.js';
+import { TgglConfig, TgglStorage } from './types.js';
+import { TgglLocalClientStateSerializer } from './serializers.js';
 import { Flag, Operator } from 'tggl-core';
 
 before(() => {

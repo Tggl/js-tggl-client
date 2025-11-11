@@ -1,4 +1,4 @@
-import { PACKAGE_VERSION } from './version';
+import { PACKAGE_VERSION } from './version.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'fs/promises';

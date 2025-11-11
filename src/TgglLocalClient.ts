@@ -5,12 +5,12 @@ import {
   TgglFlagSlug,
   TgglFlagValue,
   TgglStorage,
-} from './types';
-import { TgglReporting, TgglReportingOptions } from './TgglReporting';
+} from './types.js';
+import { TgglReporting, TgglReportingOptions } from './TgglReporting.js';
 import ky from 'ky';
 import { evalFlag, Flag } from 'tggl-core';
-import { PACKAGE_VERSION } from './version';
-import { TgglLocalClientStateSerializer } from './serializers';
+import { PACKAGE_VERSION } from './version.js';
+import { TgglLocalClientStateSerializer } from './serializers.js';
 
 export type TgglLocalClientOptions = {
   apiKey?: string | null;

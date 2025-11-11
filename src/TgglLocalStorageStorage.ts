@@ -1,4 +1,4 @@
-import { TgglStorage } from './types';
+import { TgglStorage } from './types.js';
 
 const hasLocalStorage = Boolean(
   // @ts-expect-error only works in browser

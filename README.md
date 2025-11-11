@@ -35,19 +35,35 @@ Install the dependency:
 npm i tggl-client
 ```
 
-Start evaluating flags:
+Client applications (browsers, React Native, etc.) should use the TgglClient with a client API key:
 
 ```typescript
 import { TgglClient } from 'tggl-client'
 
-const flags = await client.evalContext({
-  userId: 'foo',
-  email: 'foo@gmail.com',
-  country: 'FR',
-  // ...
+const client = new TgglClient({
+  apiKey: 'XXX',
+  initialContext: { userId: 'abc123' },
 })
 
-if (flags.get('my-feature', true)) {
+await client.waitReady()
+
+if (client.get('my-feature', true)) {
+  // ...
+}
+```
+
+Backend applications (NodeJs) should use the TgglLocalClient with a server API key:
+
+```typescript
+import { TgglLocalClient } from 'tggl-client'
+
+const client = new TgglLocalClient({
+  apiKey: 'XXX',
+})
+
+await client.waitReady()
+
+if (client.get({ userId: 'abc123' }, 'my-feature', true)) {
   // ...
 }
 ```

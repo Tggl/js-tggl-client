@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { TgglClient } from './TgglClient';
+import { TgglClient } from './TgglClient.js';
 import { before, beforeEach, test, after, describe, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fetchMock from 'fetch-mock';
-import { PACKAGE_VERSION } from './version';
-import { TgglReporting } from './TgglReporting';
-import { TgglStorage } from './types';
-import { TgglClientStateSerializer } from './serializers';
+import { PACKAGE_VERSION } from './version.js';
+import { TgglReporting } from './TgglReporting.js';
+import { TgglStorage } from './types.js';
+import { TgglClientStateSerializer } from './serializers.js';
 
 before(() => {
   fetchMock.mockGlobal();

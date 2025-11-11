@@ -4,12 +4,12 @@ import {
   TgglFlagSlug,
   TgglFlagValue,
   TgglStorage,
-} from './types';
-import { TgglReporting, TgglReportingOptions } from './TgglReporting';
-import { PACKAGE_VERSION } from './version';
+} from './types.js';
+import { TgglReporting, TgglReportingOptions } from './TgglReporting.js';
+import { PACKAGE_VERSION } from './version.js';
 import ky from 'ky';
-import { TgglClientStateSerializer } from './serializers';
-import { localStorageStorage } from './TgglLocalStorageStorage';
+import { TgglClientStateSerializer } from './serializers.js';
+import { localStorageStorage } from './TgglLocalStorageStorage.js';
 
 export type TgglClientOptions<TContext extends TgglContext = TgglContext> = {
   apiKey?: string | null;

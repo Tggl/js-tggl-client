@@ -1,4 +1,4 @@
-import { TgglConfig, TgglFlags, TgglFlagSlug } from './types';
+import { TgglConfig, TgglFlags, TgglFlagSlug } from './types.js';
 
 type TgglClientState<TFlags extends TgglFlags = TgglFlags> = {
   flags: Partial<TFlags>;

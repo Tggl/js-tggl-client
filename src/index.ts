@@ -1,9 +1,9 @@
-export { TgglClient, TgglClientOptions } from './TgglClient';
-export { TgglLocalClient, TgglLocalClientOptions } from './TgglLocalClient';
-export { localStorageStorage } from './TgglLocalStorageStorage';
+export { TgglClient, TgglClientOptions } from './TgglClient.js';
+export { TgglLocalClient, TgglLocalClientOptions } from './TgglLocalClient.js';
+export { localStorageStorage } from './TgglLocalStorageStorage.js';
 export {
   TgglReporting,
   TgglReport,
   TgglReportingOptions,
-} from './TgglReporting';
-export type * from './types';
+} from './TgglReporting.js';
+export type * from './types.js';

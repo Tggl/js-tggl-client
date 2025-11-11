@@ -1,7 +1,7 @@
 import { before, beforeEach, describe, test } from 'node:test';
 import fetchMock from 'fetch-mock';
 import assert from 'node:assert/strict';
-import { TgglReporting } from './TgglReporting';
+import { TgglReporting } from './TgglReporting.js';
 
 before(() => {
   fetchMock.mockGlobal();
