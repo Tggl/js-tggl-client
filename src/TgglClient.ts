@@ -1,255 +1,415 @@
-import { TgglClientOptions, TgglContext, TgglFlags } from './types'
-import { TgglResponse } from './TgglResponse'
-import DataLoader from 'dataloader'
-import { assertValidContext } from './validation'
-import { apiCall } from './apiCall'
-import { PACKAGE_VERSION, TgglReporting } from './TgglReporting'
+import {
+  TgglContext,
+  TgglFlags,
+  TgglFlagSlug,
+  TgglFlagValue,
+  TgglStorage,
+} from './types';
+import { TgglReporting, TgglReportingOptions } from './TgglReporting';
+import { PACKAGE_VERSION } from './version';
+import ky from 'ky';
+import { TgglClientStateSerializer } from './serializers.ts';
+import { localStorageStorage } from './TgglLocalStorageStorage.ts';
+
+export type TgglClientOptions<
+  TFlags extends TgglFlags = TgglFlags,
+  TContext extends TgglContext = TgglContext,
+> = {
+  apiKey?: string | null;
+  baseUrls?: string[];
+  maxRetries?: number;
+  timeoutMs?: number;
+  pollingIntervalMs?: number;
+  storages?: TgglStorage[];
+  initialContext?: Partial<TContext>;
+  reporting?: TgglReportingOptions | TgglReporting | boolean;
+  appName?: string | null;
+};
 
 export class TgglClient<
   TFlags extends TgglFlags = TgglFlags,
-  TContext extends TgglContext = TgglContext
-> extends TgglResponse<TFlags> {
-  private context: Partial<TContext> = {}
-  private url: string
-  private loader: DataLoader<Partial<TContext>, Partial<TFlags>>
-  private pollingInterval: number = 0
-  private timeoutID?: ReturnType<typeof setTimeout>
-  private fetchID = 0
-  private fetchPromise?: Promise<number>
-  private lastSuccessfulFetchID = 0
-  private lastSuccessfulFetchResponse: {
-    context: Partial<TContext>
-    response: Partial<TFlags>
-  } | null = null
-  private onResultChangeCallbacks = new Map<
-    number,
-    (flags: Partial<TFlags>) => void
-  >()
-  private onFetchSuccessfulCallbacks = new Map<number, () => void>()
-  private onFetchFailCallbacks = new Map<number, (error: Error) => void>()
-  private log = true
+  TContext extends TgglContext = TgglContext,
+> {
+  private _apiKey: string | null;
+  private _baseUrls: string[];
+  private _context: Partial<TContext>;
+  private _flags: Partial<TFlags> = {};
+  private _reporting: TgglReporting;
+  private _clientId: string;
+  private _pollingIntervalMs: number = 0;
+  private _nextPolling: number | null = null;
+  private _contextVersion: number = 1;
+  private _maxRetries: number;
+  private _timeoutMs: number;
+  private _error: Error | null = null;
+  private _storages: TgglStorage[];
+  private _ready: boolean = false;
+  private _resolveReady: (() => void) | null = null;
+  private _readyPromise: Promise<void> = new Promise((resolve) => {
+    this._resolveReady = resolve;
+  });
+  private _fetching: boolean = false;
+  private _resolveFetching: (() => void) | null = null;
+  private _fetchingPromise: Promise<void> = Promise.resolve();
+  private _eventListeners = new Map<
+    string,
+    Map<number, (...args: any[]) => void>
+  >();
+  private _eventListenerId: number = 0;
+  private _fetchedOnce: boolean = false;
 
-  constructor(
-    private apiKey?: string | null,
-    options: TgglClientOptions<TFlags> = {}
-  ) {
-    const reportingOptions =
-      options.reporting && typeof options.reporting === 'object'
-        ? options.reporting
-        : {}
+  constructor({
+    apiKey = null,
+    baseUrls = [],
+    maxRetries = 3,
+    timeoutMs = 8_000,
+    pollingIntervalMs = 0,
+    storages = [localStorageStorage],
+    initialContext = {},
+    reporting = true,
+    appName = null,
+  }: TgglClientOptions<TFlags, TContext> = {}) {
+    this._apiKey = apiKey;
+    this._maxRetries = maxRetries;
+    this._timeoutMs = timeoutMs;
 
-    super(options.initialActiveFlags, {
-      reporting:
-        options.reporting === false
-          ? null
-          : new TgglReporting({
-              apiKey: reportingOptions.apiKey ?? apiKey,
-              app: reportingOptions.app,
-              appPrefix:
-                reportingOptions.appPrefix ??
-                `js-client:${PACKAGE_VERSION}/TgglClient`,
-              url: reportingOptions.url,
-              baseUrl: reportingOptions.baseUrl ?? options.baseUrl,
-              reportInterval: reportingOptions.reportInterval,
-            }),
-    })
-
-    if (options.url) {
-      this.url = options.url
-    } else if (options.baseUrl) {
-      this.url = options.baseUrl + '/flags'
-    } else {
-      this.url = 'https://api.tggl.io/flags'
+    this._baseUrls = baseUrls;
+    if (!this._baseUrls.includes('https://api.tggl.io')) {
+      this._baseUrls.push('https://api.tggl.io');
     }
 
-    this.log = options.log ?? true
+    this._clientId = `js-client:${PACKAGE_VERSION}/TgglClient`;
+    if (appName) {
+      this._clientId += `/${appName}`;
+    }
 
-    this.loader = new DataLoader<Partial<TContext>, Partial<TFlags>>(
-      async (contexts) => {
+    this._context = initialContext;
+
+    const defaultReportingOptions: TgglReportingOptions = {
+      apiKey: apiKey,
+      baseUrls: this._baseUrls,
+      flushIntervalMs: 5_000,
+    };
+
+    if (reporting === false) {
+      this._reporting = new TgglReporting({
+        ...defaultReportingOptions,
+        flushIntervalMs: 0,
+      });
+    } else if (reporting === true) {
+      this._reporting = new TgglReporting(defaultReportingOptions);
+    } else if (reporting instanceof TgglReporting) {
+      this._reporting = reporting;
+    } else {
+      this._reporting = new TgglReporting({
+        ...defaultReportingOptions,
+        ...reporting,
+      });
+    }
+
+    let latestDate = 0;
+    for (const storage of storages) {
+      try {
+        Promise.resolve(storage.get())
+          .then((value) => {
+            if (this._fetchedOnce || value == null) {
+              return;
+            }
+            const parsed = TgglClientStateSerializer.deserialize<TFlags>(value);
+            if (!parsed) {
+              return;
+            }
+            if (parsed.date > latestDate) {
+              latestDate = parsed.date;
+              this.setFlags(parsed.flags);
+            }
+          })
+          .catch(() => null);
+      } catch {
+        // ignore
+      }
+    }
+    this.onFlagsChange(() => {
+      if (!this._fetchedOnce) {
+        return;
+      }
+      const serialized = TgglClientStateSerializer.serialize({
+        date: Date.now(),
+        flags: this._flags,
+      });
+      for (const storage of storages) {
         try {
-          return (await apiCall({
-            url: this.url,
-            apiKey: this.apiKey,
-            body: contexts,
-            method: 'post',
-          })) as Promise<any>
-        } catch (error) {
-          throw new Error(
-            `Invalid response from Tggl: ${
-              // @ts-ignore
-              error.error ?? error.message ?? JSON.stringify(error)
-            }`
-          )
+          Promise.resolve(storage.set(serialized)).catch(() => null);
+        } catch {
+          // ignore
         }
-      },
-      { cache: false }
-    )
+      }
+    });
+    this._storages = storages;
 
-    this.startPolling(options.pollingInterval ?? 0)
-  }
-
-  onResultChange(callback: (flags: Partial<TFlags>) => void) {
-    const id = Math.random()
-    this.onResultChangeCallbacks.set(id, callback)
-
-    return () => {
-      this.onResultChangeCallbacks.delete(id)
+    this.startPolling(pollingIntervalMs);
+    if (pollingIntervalMs <= 0) {
+      this.refetch();
     }
   }
 
-  onFetchSuccessful(callback: () => void) {
-    const id = Math.random()
-    this.onFetchSuccessfulCallbacks.set(id, callback)
+  get<
+    TSlug extends TgglFlagSlug<TFlags>,
+    TDefaultValue = TgglFlagValue<TSlug, TFlags>,
+  >(
+    slug: TSlug,
+    defaultValue: TDefaultValue
+  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue {
+    const value =
+      this._flags[slug as keyof TFlags] === undefined
+        ? defaultValue
+        : (this._flags[slug as keyof TFlags] as TgglFlagValue<TSlug, TFlags>);
 
+    this._reporting.reportFlag({
+      value,
+      slug: slug as string,
+      default: defaultValue,
+      clientId: this._clientId,
+    });
+
+    return value;
+  }
+
+  getAll(): Partial<TFlags> {
+    return this._flags;
+  }
+
+  private _registerEventListener(
+    event: string,
+    callback: (...args: any[]) => void
+  ) {
+    const id = this._eventListenerId++;
+    if (!this._eventListeners.has(event)) {
+      this._eventListeners.set(event, new Map());
+    }
+    this._eventListeners.get(event)!.set(id, callback);
     return () => {
-      this.onFetchSuccessfulCallbacks.delete(id)
+      this._eventListeners.get(event)!.delete(id);
+    };
+  }
+
+  private _emitEvent(event: string, ...args: any[]) {
+    for (const callback of this._eventListeners.get(event)?.values() ?? []) {
+      try {
+        Promise.resolve(callback(...args)).catch(() => null);
+      } catch (error) {
+        // Catch callback errors to prevent them from affecting other callbacks
+      }
     }
   }
 
-  onFetchFail(callback: (error: Error) => void) {
-    const id = Math.random()
-    this.onFetchFailCallbacks.set(id, callback)
-
-    return () => {
-      this.onFetchFailCallbacks.delete(id)
-    }
+  onFlagsChange(callback: (flags: TgglFlagSlug<TFlags>[]) => void): () => void {
+    return this._registerEventListener('flagsChange', callback);
   }
 
-  startPolling(pollingInterval: number) {
-    this.pollingInterval = pollingInterval
+  onFlagChange(slug: TgglFlagSlug<TFlags>, callback: () => void): () => void {
+    return this._registerEventListener('flagChange-' + String(slug), callback);
+  }
 
-    if (pollingInterval > 0) {
-      this.setContext(this.context)
+  getContext(): Partial<TContext> {
+    return this._context;
+  }
+
+  async setContext(context: Partial<TContext>): Promise<void> {
+    if (this._nextPolling) {
+      clearTimeout(this._nextPolling);
+      this._nextPolling = null;
+    }
+
+    if (!this._fetching) {
+      this._fetching = true;
+      this._fetchingPromise = new Promise((resolve) => {
+        this._resolveFetching = resolve;
+      });
+    }
+
+    this._contextVersion++;
+    const version = this._contextVersion;
+
+    const postData = JSON.stringify(context);
+    const headers: Record<string, string | undefined> = {
+      'Content-Type': 'application/json',
+      'Content-Length': String(Buffer.byteLength(postData)),
+    };
+
+    if (this._apiKey) {
+      headers['x-tggl-api-key'] = this._apiKey;
+    }
+
+    let lastError: any = null;
+    let response: Partial<TFlags> | null = null;
+    for (const baseUrl of this._baseUrls) {
+      try {
+        response = await ky
+          .post(baseUrl + '/flags', {
+            headers,
+            body: postData,
+            retry: {
+              methods: ['post'],
+              limit: this._maxRetries,
+              retryOnTimeout: true,
+              backoffLimit: 500,
+            },
+            hooks: {
+              beforeError: [
+                async (error) => {
+                  try {
+                    const response: any = await error.response?.json();
+                    if ('error' in response) {
+                      error.message = response.error as string;
+                    }
+                  } catch {
+                    // ignore
+                  }
+                  return error;
+                },
+              ],
+            },
+            timeout: this._timeoutMs,
+          })
+          .json<Partial<TFlags>>();
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (version !== this._contextVersion) {
+      return this._fetchingPromise;
+    }
+
+    this._ready = true;
+
+    if (response === null) {
+      this._error = lastError;
+      this._emitEvent('error', lastError);
     } else {
-      this.cancelNextPolling()
+      this._fetchedOnce = true;
+      this._context = { ...context };
+      this.setFlags(response);
+    }
+
+    if (this._resolveReady) {
+      this._resolveReady();
+      this._resolveReady = null;
+    }
+
+    this._fetching = false;
+    if (this._resolveFetching) {
+      this._resolveFetching();
+      this._resolveFetching = null;
+    }
+
+    if (this._pollingIntervalMs > 0) {
+      this._nextPolling = setTimeout(() => {
+        this.refetch();
+      }, this._pollingIntervalMs) as unknown as number;
+    }
+  }
+
+  setFlags(flags: Partial<TFlags>): void {
+    this._error = null;
+    this._ready = true;
+
+    const oldFlags = this._flags;
+    const changedFlags: TgglFlagSlug<TFlags>[] = [];
+    const allKeys = new Set([...Object.keys(oldFlags), ...Object.keys(flags)]);
+    this._flags = flags;
+
+    for (const key of allKeys) {
+      const oldValue = oldFlags[key as keyof TFlags];
+      const newValue = flags[key as keyof TFlags];
+
+      // Deep comparison for changes
+      if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+        changedFlags.push(key as TgglFlagSlug<TFlags>);
+        this._emitEvent('flagChange-' + key);
+      }
+    }
+
+    if (changedFlags.length > 0) {
+      this._emitEvent('flagsChange', changedFlags);
+    }
+
+    if (this._resolveReady) {
+      this._resolveReady();
+      this._resolveReady = null;
+    }
+  }
+
+  startPolling(pollingIntervalMs: number) {
+    // start
+    if (this._pollingIntervalMs === 0 && pollingIntervalMs > 0) {
+      this._pollingIntervalMs = pollingIntervalMs;
+      this.refetch();
+    }
+    // stop
+    else if (this._pollingIntervalMs > 0 && pollingIntervalMs <= 0) {
+      this._pollingIntervalMs = 0;
+      if (this._nextPolling) {
+        clearTimeout(this._nextPolling);
+        this._nextPolling = null;
+      }
+    }
+    // change interval
+    else {
+      this._pollingIntervalMs = Math.max(0, pollingIntervalMs);
     }
   }
 
   stopPolling() {
-    this.startPolling(0)
+    this.startPolling(0);
   }
 
-  private planNextPolling() {
-    if (this.pollingInterval > 0 && !this.timeoutID) {
-      this.timeoutID = setTimeout(async () => {
-        await this.setContext(this.context)
-      }, this.pollingInterval)
-    }
-  }
-
-  private cancelNextPolling() {
-    if (this.timeoutID) {
-      clearTimeout(this.timeoutID)
-      this.timeoutID = undefined
-    }
-  }
-
-  private async waitForLastFetchToFinish() {
-    while (this.fetchPromise && this.fetchID !== (await this.fetchPromise)) {}
-  }
-
-  async setContext(context: Partial<TContext>) {
-    const fetchID = ++this.fetchID
-
-    let done: () => void = () => null
-    this.fetchPromise = new Promise((resolve) => {
-      done = () => resolve(fetchID)
-    })
-
-    try {
-      this.cancelNextPolling()
-
-      assertValidContext(context)
-
-      const response = await this.loader.load(context)
-
-      for (const callback of this.onFetchSuccessfulCallbacks.values()) {
-        callback()
-      }
-
-      if (fetchID > this.lastSuccessfulFetchID) {
-        this.lastSuccessfulFetchID = fetchID
-        this.lastSuccessfulFetchResponse = { context, response }
-      }
-
-      // If another fetch was started while this one was running
-      if (fetchID !== this.fetchID) {
-        await this.waitForLastFetchToFinish()
-
-        return
-      }
-    } catch (error) {
-      for (const callback of this.onFetchFailCallbacks.values()) {
-        callback(error as Error)
-      }
-      if (this.log) {
-        console.error(error)
-      }
-    } finally {
-      // If this is the last fetch that was started, we can update the config
-      if (fetchID === this.fetchID && this.lastSuccessfulFetchResponse) {
-        this.setRawFlags(this.lastSuccessfulFetchResponse)
-      }
-
-      done()
-      this.planNextPolling()
-    }
-  }
-
-  private setRawFlags({
-    context,
-    response,
-  }: {
-    context: Partial<TContext>
-    response: Partial<TFlags>
-  }) {
-    const resultChanged =
-      this.onResultChangeCallbacks.size > 0 &&
-      (Object.keys(response).length !== Object.keys(this.flags).length ||
-        !Object.keys(response).every(
-          (key: string) =>
-            JSON.stringify(this.flags[key as keyof TFlags]) ===
-            JSON.stringify(response[key as keyof TFlags])
-        ))
-
-    this.context = context
-    this.flags = response
-
-    if (resultChanged) {
-      for (const callback of this.onResultChangeCallbacks.values()) {
-        callback(this.flags)
+  async close() {
+    this.stopPolling();
+    this._reporting.stop();
+    await this._reporting.flush();
+    for (const storage of this._storages) {
+      try {
+        await storage.close?.();
+      } catch {
+        // ignore
       }
     }
   }
 
-  async evalContext(context: Partial<TContext>) {
-    const responses = await this.evalContexts([context])
-
-    return responses[0]
+  async refetch(): Promise<void> {
+    await this.setContext(this.getContext());
   }
 
-  async evalContexts(
-    contexts: Partial<TContext>[]
-  ): Promise<TgglResponse<TFlags>[]> {
-    try {
-      contexts.forEach(assertValidContext)
-      const responses = await this.loader.loadMany(contexts)
+  isReady(): boolean {
+    return this._ready;
+  }
 
-      return responses.map((response) => {
-        if (response instanceof Error) {
-          throw response
-        }
+  waitReady(): Promise<void> {
+    return this._readyPromise;
+  }
 
-        return new TgglResponse(response, { reporting: this.reporting })
-      })
-    } catch (error) {
-      if (this.log) {
-        console.error(error)
-      }
-
-      return contexts.map(
-        () => new TgglResponse({}, { reporting: this.reporting })
-      )
+  onReady(callback: () => void) {
+    if (this._ready) {
+      callback();
+    } else {
+      this._readyPromise.then(() => {
+        callback();
+      });
     }
+  }
+
+  getError(): Error | null {
+    return this._error;
+  }
+
+  onError(callback: (error: Error) => void): () => void {
+    return this._registerEventListener('error', callback);
+  }
+
+  getReporting(): TgglReporting {
+    return this._reporting;
   }
 }

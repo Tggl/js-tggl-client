@@ -1,10 +1,6 @@
-lib
-node_modules
-coverage
-.idea/workspace.xml
-.idea/usage.statistics.xml
-.idea/tasks.xml
-.idea/shelf
-.idea/dictionaries
+dist/
+build/
+node_modules/
+coverage/
 /.husky/
 /.idea/

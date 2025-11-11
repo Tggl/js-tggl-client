@@ -1,15 +1,9 @@
-export type {
-  TgglFlagValue,
-  TgglFlags,
-  TgglFlagSlug,
-  TgglContext,
-  TgglConfig,
-  TgglClientOptions,
-  TgglLocalClientOptions,
+export { TgglClient, TgglClientOptions } from './TgglClient';
+export { TgglLocalClient, TgglLocalClientOptions } from './TgglLocalClient';
+export { localStorageStorage } from './TgglLocalStorageStorage';
+export {
+  TgglReporting,
+  TgglReport,
   TgglReportingOptions,
-} from './types'
-export { TgglResponse } from './TgglResponse'
-export { TgglClient } from './TgglClient'
-export { TgglLocalClient } from './TgglLocalClient'
-export { TgglReporting } from './TgglReporting'
-export { apiCall as tgglApi } from './apiCall'
+} from './TgglReporting.ts';
+export type * from './types.ts';
