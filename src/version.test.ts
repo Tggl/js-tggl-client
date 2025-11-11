@@ -1,8 +1,9 @@
-import { PACKAGE_VERSION } from './version.ts';
-import packageJson from '../../js-tggl-client-v2/package.json';
+import { PACKAGE_VERSION } from './version';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'fs/promises';
 
-test('version should match package.json', () => {
+test('version should match package.json', async () => {
+  const packageJson = JSON.parse(await fs.readFile('package.json', 'utf8'));
   assert.equal(PACKAGE_VERSION, packageJson.version);
 });

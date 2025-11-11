@@ -1,4 +1,4 @@
-import { TgglConfig, TgglFlags, TgglFlagSlug } from './types.ts';
+import { TgglConfig, TgglFlags, TgglFlagSlug } from './types';
 
 type TgglClientState<TFlags extends TgglFlags = TgglFlags> = {
   flags: Partial<TFlags>;

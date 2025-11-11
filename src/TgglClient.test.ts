@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { TgglClient } from './TgglClient';
 import { before, beforeEach, test, after, describe, mock } from 'node:test';
 import assert from 'node:assert/strict';
@@ -850,7 +851,7 @@ describe('reporting', () => {
   test('apiKey is passed down to reporting', () => {
     const client = new TgglClient({ apiKey: 'my_api_key' });
 
-    //@ts-ignore
+    //@ts-expect-error
     assert.equal(client.getReporting()._apiKey, 'my_api_key');
   });
 
@@ -1598,7 +1599,6 @@ describe('storages', () => {
     fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}');
 
     const storage: TgglStorage = {
-      // @ts-ignore
       get: () => Promise.resolve(null),
       set: () => Promise.resolve(),
     };
@@ -1616,7 +1616,7 @@ describe('storages', () => {
     fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}');
 
     const storage: TgglStorage = {
-      // @ts-ignore
+      // @ts-expect-error
       get: () => Promise.resolve(undefined),
       set: () => Promise.resolve(),
     };
@@ -1762,7 +1762,6 @@ describe('storages', () => {
     };
 
     const storage3: TgglStorage = {
-      //@ts-ignore
       get: () => Promise.resolve(null),
       set: () => Promise.resolve(),
     };

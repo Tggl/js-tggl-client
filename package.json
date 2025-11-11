@@ -41,7 +41,7 @@
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:types": "tsc -p tsconfig.types.json",
     "clean": "rm -rf dist",
-    "test": "node --import tsx --test src/**/*.test.ts",
+    "test": "node --import tsx --test $(find src -name '*.test.ts')",
     "test:coverage": "c8 --reporter=text --reporter=lcov npm test",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
@@ -51,9 +51,6 @@
     "preversion": "npm test",
     "version": "node scripts/syncVersion.mjs && npm run format && git add -A src",
     "postversion": "git push && git push --tags"
-  },
-  "lint-staged": {
-    "**/*": "prettier --write --ignore-unknown"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

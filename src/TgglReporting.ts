@@ -22,7 +22,7 @@ export type TgglReport = {
   }>;
 };
 
-const constantCase = (str: string) => {
+const constantCase = (str: string): string => {
   return str
     .replace(/([a-z])([A-Z])/g, '$1_$2')
     .replace(/[\W_]+/g, '_')
@@ -66,11 +66,11 @@ export class TgglReporting {
     this.start(flushIntervalMs);
   }
 
-  stop() {
+  stop(): void {
     this.start(0);
   }
 
-  start(flushIntervalMs: number = 5_000) {
+  start(flushIntervalMs: number = 5_000): void {
     this._flushIntervalMs = Math.max(0, flushIntervalMs);
 
     if (flushIntervalMs <= 0 && this._nextFlush) {
@@ -210,7 +210,7 @@ export class TgglReporting {
     this._scheduleNextFlush();
   }
 
-  private _scheduleNextFlush() {
+  private _scheduleNextFlush(): void {
     if (this._flushIntervalMs <= 0 || this._nextFlush) {
       return;
     }
@@ -235,7 +235,7 @@ export class TgglReporting {
     count?: number;
     clientId: string;
     slug: string;
-  }) {
+  }): void {
     try {
       this._reportFlags[data.clientId] ??= {};
 
@@ -263,7 +263,7 @@ export class TgglReporting {
     this._scheduleNextFlush();
   }
 
-  reportContext(context: any) {
+  reportContext(context: any): void {
     try {
       const now = Math.round(Date.now() / 1000);
 
@@ -299,7 +299,7 @@ export class TgglReporting {
     this._scheduleNextFlush();
   }
 
-  mergeReport(report: TgglReport) {
+  mergeReport(report: TgglReport): void {
     if (!report || typeof report !== 'object' || Array.isArray(report)) {
       return;
     }

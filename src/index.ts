@@ -5,5 +5,5 @@ export {
   TgglReporting,
   TgglReport,
   TgglReportingOptions,
-} from './TgglReporting.ts';
-export type * from './types.ts';
+} from './TgglReporting';
+export type * from './types';

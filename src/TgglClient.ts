@@ -8,13 +8,10 @@ import {
 import { TgglReporting, TgglReportingOptions } from './TgglReporting';
 import { PACKAGE_VERSION } from './version';
 import ky from 'ky';
-import { TgglClientStateSerializer } from './serializers.ts';
-import { localStorageStorage } from './TgglLocalStorageStorage.ts';
+import { TgglClientStateSerializer } from './serializers';
+import { localStorageStorage } from './TgglLocalStorageStorage';
 
-export type TgglClientOptions<
-  TFlags extends TgglFlags = TgglFlags,
-  TContext extends TgglContext = TgglContext,
-> = {
+export type TgglClientOptions<TContext extends TgglContext = TgglContext> = {
   apiKey?: string | null;
   baseUrls?: string[];
   maxRetries?: number;
@@ -68,7 +65,7 @@ export class TgglClient<
     initialContext = {},
     reporting = true,
     appName = null,
-  }: TgglClientOptions<TFlags, TContext> = {}) {
+  }: TgglClientOptions<TContext> = {}) {
     this._apiKey = apiKey;
     this._maxRetries = maxRetries;
     this._timeoutMs = timeoutMs;
@@ -182,7 +179,7 @@ export class TgglClient<
   private _registerEventListener(
     event: string,
     callback: (...args: any[]) => void
-  ) {
+  ): () => void {
     const id = this._eventListenerId++;
     if (!this._eventListeners.has(event)) {
       this._eventListeners.set(event, new Map());
@@ -193,7 +190,7 @@ export class TgglClient<
     };
   }
 
-  private _emitEvent(event: string, ...args: any[]) {
+  private _emitEvent(event: string, ...args: any[]): void {
     for (const callback of this._eventListeners.get(event)?.values() ?? []) {
       try {
         Promise.resolve(callback(...args)).catch(() => null);
@@ -342,7 +339,7 @@ export class TgglClient<
     }
   }
 
-  startPolling(pollingIntervalMs: number) {
+  startPolling(pollingIntervalMs: number): void {
     // start
     if (this._pollingIntervalMs === 0 && pollingIntervalMs > 0) {
       this._pollingIntervalMs = pollingIntervalMs;
@@ -362,11 +359,11 @@ export class TgglClient<
     }
   }
 
-  stopPolling() {
+  stopPolling(): void {
     this.startPolling(0);
   }
 
-  async close() {
+  async close(): Promise<void> {
     this.stopPolling();
     this._reporting.stop();
     await this._reporting.flush();
@@ -391,7 +388,7 @@ export class TgglClient<
     return this._readyPromise;
   }
 
-  onReady(callback: () => void) {
+  onReady(callback: () => void): void {
     if (this._ready) {
       callback();
     } else {

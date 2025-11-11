@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { TgglLocalClient } from './TgglLocalClient';
 import { after, before, beforeEach, describe, mock, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,7 +18,7 @@ beforeEach(() => {
   fetchMock.removeRoutes();
 });
 
-const flagAConfig = (value: any = 42) =>
+const flagAConfig = (value: any = 42): string =>
   JSON.stringify([
     {
       slug: 'flagA',
@@ -29,7 +30,7 @@ const flagAConfig = (value: any = 42) =>
     },
   ]);
 
-const flagAConfigMap = (value: any = 42) => {
+const flagAConfigMap = (value: any = 42): TgglConfig => {
   const config: TgglConfig = new Map();
   config.set('flagA', {
     conditions: [],
@@ -1014,7 +1015,7 @@ describe('reporting', () => {
       pollingIntervalMs: 0,
     });
 
-    //@ts-ignore
+    //@ts-expect-error
     assert.equal(client.getReporting()._apiKey, 'my_api_key');
   });
 
@@ -1687,7 +1688,6 @@ describe('storages', () => {
     fetchMock.get('https://api.tggl.io/config', flagAConfig(1));
 
     const storage: TgglStorage = {
-      // @ts-ignore
       get: () => Promise.resolve(null),
       set: () => Promise.resolve(),
     };
@@ -1706,7 +1706,7 @@ describe('storages', () => {
     fetchMock.get('https://api.tggl.io/config', flagAConfig(1));
 
     const storage: TgglStorage = {
-      // @ts-ignore
+      // @ts-expect-error
       get: () => Promise.resolve(undefined),
       set: () => Promise.resolve(),
     };
@@ -1840,7 +1840,6 @@ describe('storages', () => {
     };
 
     const storage3: TgglStorage = {
-      //@ts-ignore
       get: () => Promise.resolve(null),
       set: () => Promise.resolve(),
     };

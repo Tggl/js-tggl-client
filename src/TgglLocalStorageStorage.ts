@@ -1,14 +1,14 @@
-import { TgglStorage } from './types.ts';
+import { TgglStorage } from './types';
 
 const hasLocalStorage = Boolean(
-  // @ts-ignore
+  // @ts-expect-error only works in browser
   typeof window !== 'undefined' && window.localStorage
 );
 
 export const localStorageStorage: TgglStorage = {
   get(): string | null {
     if (hasLocalStorage) {
-      // @ts-ignore
+      // @ts-expect-error only works in browser
       return window.localStorage.getItem('tggl-flags') as string;
     }
 
@@ -16,7 +16,7 @@ export const localStorageStorage: TgglStorage = {
   },
   set(value: string) {
     if (hasLocalStorage) {
-      // @ts-ignore
+      // @ts-expect-error only works in browser
       window.localStorage.setItem('tggl-flags', value);
     }
   },
