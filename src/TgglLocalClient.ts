@@ -11,6 +11,8 @@ import ky from 'ky';
 import { evalFlag, Flag } from 'tggl-core';
 import { PACKAGE_VERSION } from './version.js';
 import { TgglLocalClientStateSerializer } from './serializers.js';
+import { TgglStaticClient } from './TgglStaticClient';
+import { EventEmitter } from './EventEmitter.js';
 
 export type TgglLocalClientOptions = {
   apiKey?: string | null;
@@ -26,9 +28,10 @@ export type TgglLocalClientOptions = {
 export class TgglLocalClient<
   TFlags extends TgglFlags = TgglFlags,
   TContext extends TgglContext = TgglContext,
-> {
+> extends EventEmitter {
   private _apiKey: string | null;
   private _baseUrls: string[];
+  private _appName: string | null = null;
   private _reporting: TgglReporting;
   private _config: TgglConfig<TFlags> = new Map();
   private _maxRetries: number;
@@ -47,11 +50,6 @@ export class TgglLocalClient<
   private _fetching: boolean = false;
   private _resolveFetching: (() => void) | null = null;
   private _fetchingPromise: Promise<void> = Promise.resolve();
-  private _eventListeners = new Map<
-    string,
-    Map<number, (...args: any[]) => void>
-  >();
-  private _eventListenerId: number = 0;
   private _fetchedOnce: boolean = false;
 
   constructor({
@@ -64,9 +62,11 @@ export class TgglLocalClient<
     reporting = true,
     appName = null,
   }: TgglLocalClientOptions = {}) {
+    super();
     this._apiKey = apiKey;
     this._maxRetries = maxRetries;
     this._timeoutMs = timeoutMs;
+    this._appName = appName;
 
     this._baseUrls = baseUrls;
     if (!this._baseUrls.includes('https://api.tggl.io')) {
@@ -170,6 +170,12 @@ export class TgglLocalClient<
       clientId: this._clientId,
     });
 
+    this._emitEvent('flagEval', {
+      value,
+      default: defaultValue,
+      slug,
+    });
+
     this._reporting.reportContext(context);
 
     return value;
@@ -190,28 +196,27 @@ export class TgglLocalClient<
     return result;
   }
 
-  private _registerEventListener(
-    event: string,
-    callback: (...args: any[]) => void
+  onFlagEval(
+    callback: (data: { value: unknown; default: unknown; slug: string }) => void
   ): () => void {
-    const id = this._eventListenerId++;
-    if (!this._eventListeners.has(event)) {
-      this._eventListeners.set(event, new Map());
-    }
-    this._eventListeners.get(event)!.set(id, callback);
-    return () => {
-      this._eventListeners.get(event)!.delete(id);
-    };
+    return this._registerEventListener('flagEval', callback);
   }
 
-  private _emitEvent(event: string, ...args: any[]): void {
-    for (const callback of this._eventListeners.get(event)?.values() ?? []) {
-      try {
-        Promise.resolve(callback(...args)).catch(() => null);
-      } catch (error) {
-        // Catch callback errors to prevent them from affecting other callbacks
-      }
-    }
+  onFetchSuccessful(callback: () => void): () => void {
+    return this._registerEventListener('fetch', callback);
+  }
+
+  createClientForContext(
+    context: TContext
+  ): TgglStaticClient<TFlags, TContext> {
+    this._reporting.reportContext(context);
+
+    return new TgglStaticClient<TFlags, TContext>({
+      context,
+      flags: this.getAll(context),
+      appName: this._appName,
+      reporting: this._reporting,
+    });
   }
 
   onConfigChange(
@@ -360,6 +365,7 @@ export class TgglLocalClient<
         config.set(flag.slug as TgglFlagSlug<TFlags>, flag);
       }
       this.setConfig(config);
+      this._emitEvent('fetch');
     }
 
     if (this._resolveReady) {

@@ -1,15 +1,10 @@
-import {
-  TgglContext,
-  TgglFlags,
-  TgglFlagSlug,
-  TgglFlagValue,
-  TgglStorage,
-} from './types.js';
+import { TgglContext, TgglFlags, TgglFlagSlug, TgglStorage } from './types.js';
 import { TgglReporting, TgglReportingOptions } from './TgglReporting.js';
 import { PACKAGE_VERSION } from './version.js';
 import ky from 'ky';
 import { TgglClientStateSerializer } from './serializers.js';
 import { localStorageStorage } from './TgglLocalStorageStorage.js';
+import { TgglStaticClient } from './TgglStaticClient';
 
 export type TgglClientOptions<TContext extends TgglContext = TgglContext> = {
   apiKey?: string | null;
@@ -26,13 +21,9 @@ export type TgglClientOptions<TContext extends TgglContext = TgglContext> = {
 export class TgglClient<
   TFlags extends TgglFlags = TgglFlags,
   TContext extends TgglContext = TgglContext,
-> {
+> extends TgglStaticClient<TFlags, TContext> {
   private _apiKey: string | null;
   private _baseUrls: string[];
-  private _context: Partial<TContext>;
-  private _flags: Partial<TFlags> = {};
-  private _reporting: TgglReporting;
-  private _clientId: string;
   private _pollingIntervalMs: number = 0;
   private _nextPolling: number | null = null;
   private _contextVersion: number = 1;
@@ -48,11 +39,6 @@ export class TgglClient<
   private _fetching: boolean = false;
   private _resolveFetching: (() => void) | null = null;
   private _fetchingPromise: Promise<void> = Promise.resolve();
-  private _eventListeners = new Map<
-    string,
-    Map<number, (...args: any[]) => void>
-  >();
-  private _eventListenerId: number = 0;
   private _fetchedOnce: boolean = false;
 
   constructor({
@@ -66,42 +52,49 @@ export class TgglClient<
     reporting = true,
     appName = null,
   }: TgglClientOptions<TContext> = {}) {
+    if (!baseUrls.includes('https://api.tggl.io')) {
+      baseUrls.push('https://api.tggl.io');
+    }
+
+    const defaultReportingOptions: TgglReportingOptions = {
+      apiKey: apiKey,
+      baseUrls,
+      flushIntervalMs: 5_000,
+    };
+
+    let r: TgglReporting;
+    if (reporting === false) {
+      r = new TgglReporting({
+        ...defaultReportingOptions,
+        flushIntervalMs: 0,
+      });
+    } else if (reporting === true) {
+      r = new TgglReporting(defaultReportingOptions);
+    } else if (reporting instanceof TgglReporting) {
+      r = reporting;
+    } else {
+      r = new TgglReporting({
+        ...defaultReportingOptions,
+        ...reporting,
+      });
+    }
+
+    super({
+      context: initialContext,
+      reporting: r,
+      appName,
+      flags: {},
+    });
+
     this._apiKey = apiKey;
     this._maxRetries = maxRetries;
     this._timeoutMs = timeoutMs;
 
     this._baseUrls = baseUrls;
-    if (!this._baseUrls.includes('https://api.tggl.io')) {
-      this._baseUrls.push('https://api.tggl.io');
-    }
 
     this._clientId = `js-client:${PACKAGE_VERSION}/TgglClient`;
     if (appName) {
       this._clientId += `/${appName}`;
-    }
-
-    this._context = initialContext;
-
-    const defaultReportingOptions: TgglReportingOptions = {
-      apiKey: apiKey,
-      baseUrls: this._baseUrls,
-      flushIntervalMs: 5_000,
-    };
-
-    if (reporting === false) {
-      this._reporting = new TgglReporting({
-        ...defaultReportingOptions,
-        flushIntervalMs: 0,
-      });
-    } else if (reporting === true) {
-      this._reporting = new TgglReporting(defaultReportingOptions);
-    } else if (reporting instanceof TgglReporting) {
-      this._reporting = reporting;
-    } else {
-      this._reporting = new TgglReporting({
-        ...defaultReportingOptions,
-        ...reporting,
-      });
     }
 
     let latestDate = 0;
@@ -150,54 +143,8 @@ export class TgglClient<
     }
   }
 
-  get<
-    TSlug extends TgglFlagSlug<TFlags>,
-    TDefaultValue = TgglFlagValue<TSlug, TFlags>,
-  >(
-    slug: TSlug,
-    defaultValue: TDefaultValue
-  ): TgglFlagValue<TSlug, TFlags> | TDefaultValue {
-    const value =
-      this._flags[slug as keyof TFlags] === undefined
-        ? defaultValue
-        : (this._flags[slug as keyof TFlags] as TgglFlagValue<TSlug, TFlags>);
-
-    this._reporting.reportFlag({
-      value,
-      slug: slug as string,
-      default: defaultValue,
-      clientId: this._clientId,
-    });
-
-    return value;
-  }
-
-  getAll(): Partial<TFlags> {
-    return this._flags;
-  }
-
-  private _registerEventListener(
-    event: string,
-    callback: (...args: any[]) => void
-  ): () => void {
-    const id = this._eventListenerId++;
-    if (!this._eventListeners.has(event)) {
-      this._eventListeners.set(event, new Map());
-    }
-    this._eventListeners.get(event)!.set(id, callback);
-    return () => {
-      this._eventListeners.get(event)!.delete(id);
-    };
-  }
-
-  private _emitEvent(event: string, ...args: any[]): void {
-    for (const callback of this._eventListeners.get(event)?.values() ?? []) {
-      try {
-        Promise.resolve(callback(...args)).catch(() => null);
-      } catch (error) {
-        // Catch callback errors to prevent them from affecting other callbacks
-      }
-    }
+  onFetchSuccessful(callback: () => void): () => void {
+    return this._registerEventListener('fetch', callback);
   }
 
   onFlagsChange(callback: (flags: TgglFlagSlug<TFlags>[]) => void): () => void {
@@ -206,10 +153,6 @@ export class TgglClient<
 
   onFlagChange(slug: TgglFlagSlug<TFlags>, callback: () => void): () => void {
     return this._registerEventListener('flagChange-' + String(slug), callback);
-  }
-
-  getContext(): Partial<TContext> {
-    return this._context;
   }
 
   async setContext(context: Partial<TContext>): Promise<void> {
@@ -289,6 +232,7 @@ export class TgglClient<
       this._fetchedOnce = true;
       this._context = { ...context };
       this.setFlags(response);
+      this._emitEvent('fetch');
     }
 
     if (this._resolveReady) {
@@ -404,9 +348,5 @@ export class TgglClient<
 
   onError(callback: (error: Error) => void): () => void {
     return this._registerEventListener('error', callback);
-  }
-
-  getReporting(): TgglReporting {
-    return this._reporting;
   }
 }
