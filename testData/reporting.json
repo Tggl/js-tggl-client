@@ -30,7 +30,7 @@
   },
   {
     "name": "Report single flag with app",
-    "app": "MyApp",
+    "clientId": "MyApp",
     "calls": [
       {
         "type": "flag",
@@ -56,7 +56,7 @@
   },
   {
     "name": "Report single flag with app prefix",
-    "appPrefix": "client:1.2.3",
+    "clientId": "client:1.2.3",
     "calls": [
       {
         "type": "flag",
@@ -82,8 +82,7 @@
   },
   {
     "name": "Report single flag with app and app prefix",
-    "app": "MyApp",
-    "appPrefix": "client:1.2.3",
+    "clientId": "client:1.2.3/MyApp",
     "calls": [
       {
         "type": "flag",

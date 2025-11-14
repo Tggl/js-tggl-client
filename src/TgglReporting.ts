@@ -233,21 +233,21 @@ export class TgglReporting {
     value: any;
     default: any;
     count?: number;
-    clientId: string;
+    clientId?: string | null;
     slug: string;
   }): void {
     try {
-      this._reportFlags[data.clientId] ??= {};
+      this._reportFlags[data.clientId ?? ''] ??= {};
 
       const key = `${JSON.stringify(data.value ?? null)}${JSON.stringify(
         data.default ?? null
       )}`;
 
-      this._reportFlags[data.clientId][data.slug] ??= new Map();
+      this._reportFlags[data.clientId ?? ''][data.slug] ??= new Map();
 
       const value =
-        this._reportFlags[data.clientId][data.slug].get(key) ??
-        this._reportFlags[data.clientId][data.slug]
+        this._reportFlags[data.clientId ?? ''][data.slug].get(key) ??
+        this._reportFlags[data.clientId ?? ''][data.slug]
           .set(key, {
             value: data.value ?? null,
             default: data.default ?? null,
