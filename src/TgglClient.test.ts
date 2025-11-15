@@ -2007,6 +2007,646 @@ describe('storages', () => {
   });
 });
 
+describe('onFlagEval', () => {
+  test('should be called when flag is evaluated with get', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFlagEval(callback);
+
+    client.get('flagA', 'default_value');
+
+    assert.equal(callback.mock.callCount(), 1);
+    assert.deepEqual(callback.mock.calls[0].arguments[0], {
+      value: 42,
+      default: 'default_value',
+      slug: 'flagA',
+    });
+  });
+
+  test('should be called with default value when flag does not exist', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFlagEval(callback);
+
+    client.get('nonExistentFlag', 'default_value');
+
+    assert.equal(callback.mock.callCount(), 1);
+    assert.deepEqual(callback.mock.calls[0].arguments[0], {
+      value: 'default_value',
+      default: 'default_value',
+      slug: 'nonExistentFlag',
+    });
+  });
+
+  test('should be called multiple times for multiple flag evaluations', async () => {
+    fetchMock.post(
+      'https://api.tggl.io/flags',
+      '{"flagA": 1, "flagB": "test"}'
+    );
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFlagEval(callback);
+
+    client.get('flagA', 0);
+    client.get('flagB', 'default');
+
+    assert.equal(callback.mock.callCount(), 2);
+    assert.deepEqual(callback.mock.calls[0].arguments[0], {
+      value: 1,
+      default: 0,
+      slug: 'flagA',
+    });
+    assert.deepEqual(callback.mock.calls[1].arguments[0], {
+      value: 'test',
+      default: 'default',
+      slug: 'flagB',
+    });
+  });
+
+  test('should handle multiple callbacks', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback1 = mock.fn();
+    const callback2 = mock.fn();
+    client.onFlagEval(callback1);
+    client.onFlagEval(callback2);
+
+    client.get('flagA', 'default');
+
+    assert.equal(callback1.mock.callCount(), 1);
+    assert.equal(callback2.mock.callCount(), 1);
+    assert.deepEqual(callback1.mock.calls[0].arguments[0], {
+      value: 42,
+      default: 'default',
+      slug: 'flagA',
+    });
+    assert.deepEqual(callback2.mock.calls[0].arguments[0], {
+      value: 42,
+      default: 'default',
+      slug: 'flagA',
+    });
+  });
+
+  test('unsubscribe should stop callback from being called', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    const unsubscribe = client.onFlagEval(callback);
+
+    client.get('flagA', 'default');
+    assert.equal(callback.mock.callCount(), 1);
+
+    unsubscribe();
+    callback.mock.resetCalls();
+
+    client.get('flagA', 'default');
+    assert.equal(callback.mock.callCount(), 0);
+  });
+
+  test('should handle callbacks with falsy flag values', async () => {
+    fetchMock.post(
+      'https://api.tggl.io/flags',
+      '{"flagA": null, "flagB": false, "flagC": 0, "flagD": ""}'
+    );
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFlagEval(callback);
+
+    client.get('flagA', 'default');
+    client.get('flagB', 'default');
+    client.get('flagC', 'default');
+    client.get('flagD', 'default');
+
+    assert.equal(callback.mock.callCount(), 4);
+    assert.deepEqual(callback.mock.calls[0].arguments[0], {
+      value: null,
+      default: 'default',
+      slug: 'flagA',
+    });
+    assert.deepEqual(callback.mock.calls[1].arguments[0], {
+      value: false,
+      default: 'default',
+      slug: 'flagB',
+    });
+    assert.deepEqual(callback.mock.calls[2].arguments[0], {
+      value: 0,
+      default: 'default',
+      slug: 'flagC',
+    });
+    assert.deepEqual(callback.mock.calls[3].arguments[0], {
+      value: '',
+      default: 'default',
+      slug: 'flagD',
+    });
+  });
+
+  test('should handle callbacks with complex flag values', async () => {
+    fetchMock.post(
+      'https://api.tggl.io/flags',
+      '{"flagA": {"nested": {"value": 123}}}'
+    );
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFlagEval(callback);
+
+    client.get('flagA', { default: 'object' });
+
+    assert.equal(callback.mock.callCount(), 1);
+    assert.deepEqual(callback.mock.calls[0].arguments[0], {
+      value: { nested: { value: 123 } },
+      default: { default: 'object' },
+      slug: 'flagA',
+    });
+  });
+
+  test('should handle callback exceptions gracefully', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback1 = mock.fn(() => {
+      throw new Error('Callback error');
+    });
+    const callback2 = mock.fn();
+
+    client.onFlagEval(callback1);
+    client.onFlagEval(callback2);
+
+    // Should not throw even if callback1 throws
+    client.get('flagA', 'default');
+
+    assert.equal(callback1.mock.callCount(), 1);
+    assert.equal(callback2.mock.callCount(), 1);
+  });
+
+  test('should handle async callback exceptions gracefully', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback1 = mock.fn(async () => {
+      throw new Error('Callback error');
+    });
+    const callback2 = mock.fn();
+
+    client.onFlagEval(callback1);
+    client.onFlagEval(callback2);
+
+    // Should not throw even if callback1 throws
+    client.get('flagA', 'default');
+
+    assert.equal(callback1.mock.callCount(), 1);
+    assert.equal(callback2.mock.callCount(), 1);
+  });
+
+  test('should work after context change', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}', { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 2}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFlagEval(callback);
+
+    client.get('flagA', 'default');
+    assert.equal(callback.mock.callCount(), 1);
+    assert.deepEqual(callback.mock.calls[0].arguments[0], {
+      value: 1,
+      default: 'default',
+      slug: 'flagA',
+    });
+
+    callback.mock.resetCalls();
+    await client.setContext({ userId: '456' });
+
+    client.get('flagA', 'default');
+    assert.equal(callback.mock.callCount(), 1);
+    assert.deepEqual(callback.mock.calls[0].arguments[0], {
+      value: 2,
+      default: 'default',
+      slug: 'flagA',
+    });
+  });
+});
+
+describe('onFetchSuccessful', () => {
+  test('should be called after initial successful fetch', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    assert.equal(callback.mock.callCount(), 0);
+
+    await client.waitReady();
+
+    assert.equal(callback.mock.callCount(), 1);
+  });
+
+  test('should not be called on fetch error', async () => {
+    fetchMock.post('https://api.tggl.io/flags', 500);
+
+    const client = new TgglClient({
+      maxRetries: 0,
+      reporting: false,
+    });
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    await client.waitReady();
+
+    assert.equal(callback.mock.callCount(), 0);
+  });
+
+  test('should be called after successful refetch', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}', { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 2}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    await client.refetch();
+
+    assert.equal(callback.mock.callCount(), 1);
+  });
+
+  test('should be called after successful setContext', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}', { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 2}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    await client.setContext({ userId: '123' });
+
+    assert.equal(callback.mock.callCount(), 1);
+  });
+
+  test('should not be called after failed setContext', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}', { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', 500);
+
+    const client = new TgglClient({
+      maxRetries: 0,
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    await client.setContext({ userId: '123' });
+
+    assert.equal(callback.mock.callCount(), 0);
+  });
+
+  test('should handle multiple callbacks', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    const callback1 = mock.fn();
+    const callback2 = mock.fn();
+    client.onFetchSuccessful(callback1);
+    client.onFetchSuccessful(callback2);
+
+    await client.waitReady();
+
+    assert.equal(callback1.mock.callCount(), 1);
+    assert.equal(callback2.mock.callCount(), 1);
+  });
+
+  test('unsubscribe should stop callback from being called', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}', { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 2}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    const unsubscribe = client.onFetchSuccessful(callback);
+
+    await client.refetch();
+    assert.equal(callback.mock.callCount(), 1);
+
+    unsubscribe();
+    callback.mock.resetCalls();
+
+    await client.refetch();
+    assert.equal(callback.mock.callCount(), 0);
+  });
+
+  test('should be called on successful polling', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}', { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 2}');
+
+    const client = new TgglClient({
+      pollingIntervalMs: 100,
+      reporting: false,
+    });
+
+    after(() => {
+      client.stopPolling();
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    // Wait for polling to trigger
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    assert.equal(callback.mock.callCount(), 1);
+  });
+
+  test('should not be called on failed polling', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}', { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', 500);
+
+    const client = new TgglClient({
+      pollingIntervalMs: 100,
+      maxRetries: 0,
+      reporting: false,
+    });
+
+    after(() => {
+      client.stopPolling();
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    // Wait for polling to trigger
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    assert.equal(callback.mock.callCount(), 0);
+  });
+
+  test('should be called after error is cleared', async () => {
+    fetchMock.post('https://api.tggl.io/flags', 500, { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      maxRetries: 0,
+      reporting: false,
+    });
+
+    await client.waitReady();
+    assert.notEqual(client.getError(), null);
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    await client.refetch();
+
+    assert.equal(callback.mock.callCount(), 1);
+    assert.equal(client.getError(), null);
+  });
+
+  test('should be called with context and flags available', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      initialContext: { userId: '123' },
+      reporting: false,
+    });
+
+    let contextInCallback: any = null;
+    let flagValueInCallback: any = null;
+
+    client.onFetchSuccessful(() => {
+      contextInCallback = client.getContext();
+      flagValueInCallback = client.get('flagA', 'default');
+    });
+
+    await client.waitReady();
+
+    assert.deepEqual(contextInCallback, { userId: '123' });
+    assert.equal(flagValueInCallback, 42);
+  });
+
+  test('should be called once error has been reset', async () => {
+    fetchMock.post('https://api.tggl.io/flags', 500, { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}');
+
+    const client = new TgglClient({
+      maxRetries: 0,
+      reporting: false,
+    });
+
+    await client.waitReady();
+    assert.notEqual(client.getError(), null);
+
+    let error: any = 'callback never called';
+    client.onFetchSuccessful(() => {
+      error = client.getError();
+    });
+
+    await client.refetch();
+
+    assert.equal(error, null);
+  });
+
+  test('should be called once ready has been set', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    let ready: any = 'callback never called';
+    client.onFetchSuccessful(() => {
+      ready = client.isReady();
+    });
+
+    await client.waitReady();
+
+    assert.equal(ready, true);
+  });
+
+  test('should handle callback exceptions gracefully', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    const callback1 = mock.fn(() => {
+      throw new Error('Callback error');
+    });
+    const callback2 = mock.fn();
+
+    client.onFetchSuccessful(callback1);
+    client.onFetchSuccessful(callback2);
+
+    // Should not throw even if callback1 throws
+    await client.waitReady();
+
+    assert.equal(callback1.mock.callCount(), 1);
+    assert.equal(callback2.mock.callCount(), 1);
+  });
+
+  test('should handle async callback exceptions gracefully', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    const callback1 = mock.fn(async () => {
+      throw new Error('Callback error');
+    });
+    const callback2 = mock.fn();
+
+    client.onFetchSuccessful(callback1);
+    client.onFetchSuccessful(callback2);
+
+    // Should not throw even if callback1 throws
+    await client.waitReady();
+
+    assert.equal(callback1.mock.callCount(), 1);
+    assert.equal(callback2.mock.callCount(), 1);
+  });
+
+  test('should be called after successful retry', async () => {
+    fetchMock.post('https://api.tggl.io/flags', 500, { repeat: 2 });
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 42}');
+
+    const client = new TgglClient({
+      maxRetries: 2,
+      reporting: false,
+    });
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    await client.waitReady();
+
+    assert.equal(callback.mock.callCount(), 1);
+  });
+
+  test('should be called multiple times for multiple successful fetches', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}', { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 2}', { repeat: 1 });
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 3}');
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    await client.waitReady();
+    assert.equal(callback.mock.callCount(), 1);
+
+    await client.refetch();
+    assert.equal(callback.mock.callCount(), 2);
+
+    await client.setContext({ userId: '123' });
+    assert.equal(callback.mock.callCount(), 3);
+  });
+
+  test('should be called even when flags do not change', async () => {
+    fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}', { repeat: 2 });
+
+    const client = new TgglClient({
+      reporting: false,
+    });
+
+    await client.waitReady();
+
+    const callback = mock.fn();
+    client.onFetchSuccessful(callback);
+
+    await client.refetch();
+
+    assert.equal(callback.mock.callCount(), 1);
+  });
+});
+
 describe('close', () => {
   test('should stop polling when close is called', async () => {
     fetchMock.post('https://api.tggl.io/flags', '{"flagA": 1}', { repeat: 1 });
