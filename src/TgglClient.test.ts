@@ -850,27 +850,30 @@ describe('polling', () => {
 
 describe('reporting', () => {
   test('apiKey is passed down to reporting', () => {
-    const client = new TgglClient({ apiKey: 'my_api_key' });
+    const client = new TgglClient({
+      apiKey: 'my_api_key',
+      initialFetch: false,
+    });
 
     //@ts-expect-error
     assert.equal(client.getReporting()._apiKey, 'my_api_key');
   });
 
   test('passing true as reporting option enables reporting', () => {
-    const client = new TgglClient({ reporting: true });
+    const client = new TgglClient({ reporting: true, initialFetch: false });
 
     assert.equal(client.getReporting().isActive(), true);
   });
 
   test('passing false as reporting option disables reporting', () => {
-    const client = new TgglClient({ reporting: false });
+    const client = new TgglClient({ reporting: false, initialFetch: false });
 
     assert.equal(client.getReporting().isActive(), false);
   });
 
   test('passing an existing reporting as option should work', () => {
     const reporting = new TgglReporting();
-    const client = new TgglClient({ reporting });
+    const client = new TgglClient({ reporting, initialFetch: false });
 
     assert.equal(client.getReporting(), reporting);
   });
@@ -916,6 +919,7 @@ describe('reporting', () => {
       reporting: {
         flushIntervalMs: 1,
       },
+      initialContext: { c: true },
     });
     await client.waitReady();
 
@@ -1492,6 +1496,7 @@ describe('storages', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 100));
     assert.equal(client.get('flagA', 'default'), 42);
+    console.log(fetchMock.callHistory.callLogs);
     assert.equal(fetchMock.callHistory.callLogs.length, 0);
   });
 
