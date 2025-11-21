@@ -8,8 +8,6 @@ import { TgglReporting } from './TgglReporting.js';
 import { TgglConfig, TgglStorage } from './types.js';
 import { TgglLocalClientStateSerializer } from './serializers.js';
 import { Flag, Operator } from 'tggl-core';
-import { TgglClient } from './TgglClient';
-import { TgglClientStaticStorage } from './TgglClientStaticStorage';
 import { TgglLocalClientStaticStorage } from './TgglLocalClientStaticStorage';
 
 before(() => {
