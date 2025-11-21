@@ -23,6 +23,7 @@ export type TgglLocalClientOptions = {
   storages?: TgglStorage[];
   reporting?: TgglReportingOptions | TgglReporting | boolean;
   appName?: string | null;
+  initialFetch?: boolean;
 };
 
 export class TgglLocalClient<
@@ -61,6 +62,7 @@ export class TgglLocalClient<
     storages = [],
     reporting = true,
     appName = null,
+    initialFetch = true,
   }: TgglLocalClientOptions = {}) {
     super();
     this._apiKey = apiKey;
@@ -142,7 +144,7 @@ export class TgglLocalClient<
     this._storages = storages;
 
     this.startPolling(pollingIntervalMs);
-    if (pollingIntervalMs <= 0) {
+    if (pollingIntervalMs <= 0 && initialFetch) {
       this.refetch();
     }
   }

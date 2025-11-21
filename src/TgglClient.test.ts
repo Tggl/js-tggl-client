@@ -7,6 +7,7 @@ import { PACKAGE_VERSION } from './version.js';
 import { TgglReporting } from './TgglReporting.js';
 import { TgglStorage } from './types.js';
 import { TgglClientStateSerializer } from './serializers.js';
+import { TgglClientStaticStorage } from './TgglClientStaticStorage';
 
 before(() => {
   fetchMock.mockGlobal();
@@ -1480,6 +1481,20 @@ describe('flags change events', () => {
 });
 
 describe('storages', () => {
+  test('static storage with no network', async () => {
+    fetchMock.post('https://api.tggl.io/flags', 200);
+
+    const client = new TgglClient({
+      storages: [new TgglClientStaticStorage({ flagA: 42 })],
+      initialFetch: false,
+      reporting: false,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.equal(client.get('flagA', 'default'), 42);
+    assert.equal(fetchMock.callHistory.callLogs.length, 0);
+  });
+
   test('should load flags from storage on initialization but still use network', async () => {
     fetchMock.post('https://api.tggl.io/flags', '{"flagA": "from-network"}', {
       delay: 100,

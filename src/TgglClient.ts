@@ -16,6 +16,7 @@ export type TgglClientOptions<TContext extends TgglContext = TgglContext> = {
   initialContext?: Partial<TContext>;
   reporting?: TgglReportingOptions | TgglReporting | boolean;
   appName?: string | null;
+  initialFetch?: boolean;
 };
 
 export class TgglClient<
@@ -51,6 +52,7 @@ export class TgglClient<
     initialContext = {},
     reporting = true,
     appName = null,
+    initialFetch = true,
   }: TgglClientOptions<TContext> = {}) {
     if (!baseUrls.includes('https://api.tggl.io')) {
       baseUrls.push('https://api.tggl.io');
@@ -138,7 +140,7 @@ export class TgglClient<
     this._storages = storages;
 
     this.startPolling(pollingIntervalMs);
-    if (pollingIntervalMs <= 0) {
+    if (pollingIntervalMs <= 0 && initialFetch) {
       this.refetch();
     }
   }
