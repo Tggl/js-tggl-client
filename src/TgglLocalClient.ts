@@ -11,7 +11,7 @@ import ky from 'ky';
 import { evalFlag, Flag } from 'tggl-core';
 import { PACKAGE_VERSION } from './version.js';
 import { TgglLocalClientStateSerializer } from './serializers.js';
-import { TgglStaticClient } from './TgglStaticClient';
+import { TgglStaticClient } from './TgglStaticClient.js';
 import { EventEmitter } from './EventEmitter.js';
 
 export type TgglLocalClientOptions = {
