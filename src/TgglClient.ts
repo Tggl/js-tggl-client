@@ -4,7 +4,7 @@ import { PACKAGE_VERSION } from './version.js';
 import ky from 'ky';
 import { TgglClientStateSerializer } from './serializers.js';
 import { localStorageStorage } from './TgglLocalStorageStorage.js';
-import { TgglStaticClient } from './TgglStaticClient';
+import { TgglStaticClient } from './TgglStaticClient.js';
 
 export type TgglClientOptions<TContext extends TgglContext = TgglContext> = {
   apiKey?: string | null;

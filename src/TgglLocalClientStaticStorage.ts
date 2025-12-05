@@ -1,5 +1,5 @@
 import { TgglConfig, TgglStorage } from './types';
-import { TgglLocalClientStateSerializer } from './serializers';
+import { TgglLocalClientStateSerializer } from './serializers.js';
 
 export class TgglLocalClientStaticStorage implements TgglStorage {
   private data: string;
