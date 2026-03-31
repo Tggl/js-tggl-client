@@ -5,6 +5,7 @@ import ky from 'ky';
 import { TgglClientStateSerializer } from './serializers.js';
 import { localStorageStorage } from './TgglLocalStorageStorage.js';
 import { TgglStaticClient } from './TgglStaticClient.js';
+import { utf8ByteLength } from './utf8ByteLength.js';
 
 export type TgglClientOptions<TContext extends TgglContext = TgglContext> = {
   apiKey?: string | null;
@@ -176,7 +177,7 @@ export class TgglClient<
     const postData = JSON.stringify(context);
     const headers: Record<string, string | undefined> = {
       'Content-Type': 'application/json',
-      'Content-Length': String(Buffer.byteLength(postData)),
+      'Content-Length': String(utf8ByteLength(postData)),
     };
 
     if (this._apiKey) {

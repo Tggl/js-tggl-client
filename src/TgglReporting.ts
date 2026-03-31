@@ -1,4 +1,5 @@
 import ky from 'ky';
+import { utf8ByteLength } from './utf8ByteLength.js';
 
 export type TgglReportingOptions = {
   apiKey?: string | null;
@@ -173,7 +174,7 @@ export class TgglReporting {
       const postData = JSON.stringify(report);
       const headers: Record<string, string | undefined> = {
         'Content-Type': 'application/json',
-        'Content-Length': String(Buffer.byteLength(postData)),
+        'Content-Length': String(utf8ByteLength(postData)),
       };
 
       if (this._apiKey) {
